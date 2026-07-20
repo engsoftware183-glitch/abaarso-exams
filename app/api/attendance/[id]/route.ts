@@ -1,0 +1,200 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+// ======================================================
+// GET SINGLE ATTENDANCE
+// ======================================================
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const attendance =
+      await prisma.attendance.findUnique({
+        where: {
+          attendance_id: Number(id),
+        },
+
+        include: {
+          student: true,
+          course: true,
+        },
+      });
+
+    if (!attendance) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Attendance not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        attendance,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.log(
+      "GET_SINGLE_ATTENDANCE_ERROR",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Failed to fetch attendance",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// ======================================================
+// UPDATE ATTENDANCE
+// ======================================================
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const body = await req.json();
+
+    const {
+      attendance_mark,
+      student_id,
+      course_id,
+    } = body;
+
+    const existingAttendance =
+      await prisma.attendance.findUnique({
+        where: {
+          attendance_id: Number(id),
+        },
+      });
+
+    if (!existingAttendance) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Attendance not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    const attendance_percent =
+      attendance_mark * 10;
+
+    const updatedAttendance =
+      await prisma.attendance.update({
+        where: {
+          attendance_id: Number(id),
+        },
+
+        data: {
+          attendance_mark,
+          attendance_percent,
+          student_id,
+          course_id,
+        },
+
+        include: {
+          student: true,
+          course: true,
+        },
+      });
+
+    return NextResponse.json(
+      {
+        success: true,
+        attendance: updatedAttendance,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.log(
+      "UPDATE_ATTENDANCE_ERROR",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Failed to update attendance",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// ======================================================
+// DELETE ATTENDANCE
+// ======================================================
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const existingAttendance =
+      await prisma.attendance.findUnique({
+        where: {
+          attendance_id: Number(id),
+        },
+      });
+
+    if (!existingAttendance) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Attendance not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    await prisma.attendance.delete({
+      where: {
+        attendance_id: Number(id),
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "Attendance deleted successfully",
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.log(
+      "DELETE_ATTENDANCE_ERROR",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Failed to delete attendance",
+      },
+      { status: 500 }
+    );
+  }
+}

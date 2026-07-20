@@ -1,0 +1,510 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STUDENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ExamType {
+  MIDTERM
+  FINAL
+}
+
+enum ResultStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// ======================================================
+// USER
+// ======================================================
+
+model User {
+  user_id Int @id @default(autoincrement())
+
+  username String @unique
+  email    String @unique
+  password String
+
+  role Role @default(STUDENT)
+
+  student Student?
+  admin   Admin?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// ADMIN
+// ======================================================
+
+model Admin {
+  admin_id Int @id @default(autoincrement())
+
+  user_id Int @unique
+
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// ACADEMIC YEAR
+// ======================================================
+
+model Academic {
+  academic_id Int @id @default(autoincrement())
+
+  year String @unique
+
+  students  Student[]
+  semesters Semester[]
+  exams     Exam[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// FACULTY
+// ======================================================
+
+model Faculty {
+  faculty_id Int @id @default(autoincrement())
+
+  faculty_name String @unique @db.VarChar(100)
+
+  departments Department[]
+  students    Student[]
+  semesters   Semester[]
+  exams       Exam[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// DEPARTMENT
+// ======================================================
+
+model Department {
+  department_id Int @id @default(autoincrement())
+
+  department_name String @unique @db.VarChar(100)
+
+  faculty_id Int
+
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+
+  students Student[]
+  courses  Course[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+//     model Semester
+// =====================================================
+
+model Semester {
+  semester_id Int @id @default(autoincrement())
+
+  semester_name String @db.VarChar(50)
+
+  academic_id Int
+
+  faculty_id Int
+
+  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Cascade)
+
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+
+  courses Course[]
+
+  students Student[]
+
+  exams Exam[]
+
+  results Result[]
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+//  model Course 
+// =====================================================
+
+model Course {
+  // =========================================
+  // PRIMARY KEY
+  // =========================================
+
+  course_id Int @id @default(autoincrement())
+
+  // =========================================
+  // COURSE INFO
+  // =========================================
+
+  course_name String @db.VarChar(100)
+
+  course_code String @unique @db.VarChar(20)
+
+  credit_hours Int
+
+  description String? @db.Text
+
+  // =========================================
+  // FOREIGN KEYS
+  // =========================================
+
+  department_id Int
+
+  semester_id Int
+
+  // =========================================
+  // RELATIONS
+  // =========================================
+
+  department Department @relation(fields: [department_id], references: [department_id], onDelete: Cascade)
+
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+
+  // =========================================
+  // ATTENDANCE RELATION
+  // =========================================
+
+  attendances Attendance[]
+
+  // =========================================
+  // ASSESSMENT RELATION
+  // =========================================
+
+  assessments Assessment[]
+
+  // =========================================
+  // EXAM RELATION
+  // =========================================
+
+  exams Exam[]
+
+  // =========================================
+  // RESULT RELATION
+  // =========================================
+
+  results Result[]
+
+  // =========================================
+  // TIMESTAMPS
+  // =========================================
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+//   model Student
+// ======================================================
+
+model Student {
+  // =========================================
+  // PRIMARY KEY
+  // =========================================
+
+  student_id Int @id @default(autoincrement())
+
+  // =========================================
+  // USER RELATION
+  // =========================================
+
+  user_id Int @unique
+
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  // =========================================
+  // STUDENT INFO
+  // =========================================
+
+  full_name String @db.VarChar(100)
+
+  roll_no String @unique @db.VarChar(30)
+
+  gender Gender
+
+  email String @unique @db.VarChar(100)
+
+  phone String? @db.VarChar(20)
+
+  address String? @db.Text
+
+  // =========================================
+  // FOREIGN KEYS
+  // =========================================
+
+  academic_id Int
+
+  faculty_id Int
+
+  department_id Int
+
+  semester_id Int
+
+  // =========================================
+  // RELATIONS
+  // =========================================
+
+  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Cascade)
+
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+
+  department Department @relation(fields: [department_id], references: [department_id], onDelete: Cascade)
+
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+
+  // =========================================
+  // ATTENDANCE RELATION
+  // =========================================
+
+  attendances Attendance[]
+
+  // =========================================
+  // ASSESSMENT RELATION
+  // =========================================
+
+  assessments Assessment[]
+
+  // =========================================
+  // StudentExams RELATION
+  // =========================================
+
+  studentExams StudentExam[]
+
+  // =========================================
+  // RESULT RELATION
+  // =========================================
+
+  results Result[]
+
+  // =========================================
+  // TIMESTAMPS
+  // =========================================
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+//model Attendance
+// ======================================================
+
+model Attendance {
+  attendance_id Int @id @default(autoincrement())
+
+  attendance_mark Float @default(0)
+
+  attendance_percent Float
+
+  student_id Int
+  course_id  Int
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// model Assessment
+// ======================================================
+
+model Assessment {
+  assessment_id Int @id @default(autoincrement())
+
+  assignment_mark Float @default(0)
+
+  quiz_mark Float @default(0)
+
+  total_assessment Float @default(0)
+
+  student_id Int
+  course_id  Int
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// EXAM
+// ======================================================
+
+model Exam {
+  exam_id Int @id @default(autoincrement())
+
+  exam_type ExamType
+
+  total_marks Float
+
+  exam_date DateTime
+
+  academic_id Int
+
+  faculty_id Int
+
+  semester_id Int
+
+  course_id Int
+
+  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Cascade)
+
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+
+  studentExams StudentExam[]
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+}
+
+// ======================================================
+//      model StudentExam
+// ======================================================
+
+model StudentExam {
+  student_exam_id Int @id @default(autoincrement())
+
+  marks Float @default(0)
+
+  student_id Int
+
+  exam_id Int
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  exam Exam @relation(fields: [exam_id], references: [exam_id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+
+  @@unique([student_id, exam_id])
+}
+
+// ======================================================
+// RESULT
+// ======================================================
+
+model Result {
+  // =========================================
+  // PRIMARY KEY
+  // =========================================
+
+  result_id Int @id @default(autoincrement())
+
+  // =========================================
+  // FINAL RESULT
+  // =========================================
+
+  total_marks Float @default(0)
+
+  grade String? @db.VarChar(10)
+
+  gpa Float @default(0)
+
+  remarks String? @db.VarChar(100)
+
+  status ResultStatus @default(DRAFT)
+
+  // =========================================
+  // FOREIGN KEYS
+  // =========================================
+
+  student_id Int
+
+  course_id Int
+
+  semester_id Int
+
+  // =========================================
+  // RELATIONS
+  // =========================================
+
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+
+  // =========================================
+  // TIMESTAMPS
+  // =========================================
+
+  created_at DateTime @default(now())
+
+  updated_at DateTime @updatedAt
+
+  // =========================================
+  // UNIQUE
+  // =========================================
+
+  @@unique([student_id, course_id, semester_id])
+}
+
+// ======================================================
+// TRANSCRIPT
+// ======================================================
+
+// ======================================================
+// NOTIFICATION
+// ======================================================
+
+model Notification {
+  notification_id Int @id @default(autoincrement())
+
+  title   String
+  message String
+
+  created_at DateTime @default(now())
+}
+
+// ======================================================
+// ACTIVITY LOG
+// ======================================================
+
+model ActivityLog {
+  activity_id Int @id @default(autoincrement())
+
+  action      String
+  description String
+
+  created_at DateTime @default(now())
+}
