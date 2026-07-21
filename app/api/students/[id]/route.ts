@@ -56,8 +56,6 @@ export async function GET(
 
   results: true,
 
-  transcripts: true,
-
 },
 
 });

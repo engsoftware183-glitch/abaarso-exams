@@ -120,15 +120,6 @@ export async function GET(
             },
           },
 
-          exam: {
-            select: {
-              exam_id: true,
-              exam_type: true,
-              total_marks: true,
-              exam_date: true,
-            },
-          },
-
         },
 
         orderBy: {

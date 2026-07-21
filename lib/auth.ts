@@ -14,7 +14,7 @@ export function verifyToken(token: string) {
     ) as JwtPayload;
 
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

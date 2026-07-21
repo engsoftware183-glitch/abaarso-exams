@@ -7,14 +7,6 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import TranscriptTemplate from "@/pdf/transcript.template";
 
-const jsonResponse = (body: unknown, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -328,7 +320,7 @@ export async function GET(request: Request) {
       `attachment; filename="Transcript_${student.roll_no}_${student.student_id}.pdf"`
     );
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers,
     });
