@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ResultStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // PAGINATION TRANSCRIPTS
@@ -10,6 +12,16 @@ export async function GET(
   req: NextRequest
 ) {
   try {
+
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
 
     // =========================================
     // QUERY PARAMETERS
@@ -209,17 +221,7 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Internal Server Error",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to paginate transcripts");
 
   }
 }

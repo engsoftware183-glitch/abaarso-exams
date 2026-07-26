@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireAuth } from "@/lib/auth";
+
 
 // ======================================================
 // LOGOUT USER
@@ -11,24 +13,13 @@ export async function POST(
   try {
 
     // =========================================
-    // CHECK AUTHORIZATION HEADER
+    // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-
-          message:
-            "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================

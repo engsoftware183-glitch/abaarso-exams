@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // SEARCH EXAMS
@@ -10,6 +12,16 @@ export async function GET(
   req: NextRequest
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const keyword =
       req.nextUrl.searchParams.get(
         "keyword"
@@ -82,14 +94,6 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Failed to search exams",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to search exams");
   }
 }

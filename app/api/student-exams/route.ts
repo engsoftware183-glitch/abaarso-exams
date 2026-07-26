@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // CREATE STUDENT EXAM
@@ -7,6 +9,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const body = await req.json();
 
     const student_id = Number(body.student_id);
@@ -158,15 +170,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.log("CREATE_STUDENT_EXAM_ERROR", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to create student exam",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to create student exam");
   }
 }
 
@@ -174,8 +178,18 @@ export async function POST(req: NextRequest) {
 // GET ALL STUDENT EXAMS
 // ======================================================
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const studentExams = await prisma.studentExam.findMany({
       include: {
         student: {
@@ -215,14 +229,6 @@ export async function GET() {
   } catch (error) {
     console.log("GET_STUDENT_EXAMS_ERROR", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch student exams",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to fetch student exams");
   }
 }

@@ -3,6 +3,8 @@
 import { NextResponse } from "next/server";
 import { ResultStatus, ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 export async function GET(
@@ -10,6 +12,16 @@ export async function GET(
   context: { params: Promise<{ student_id: string }> }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(request);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { student_id } = await context.params;
 
     // 1. Validate student_id
@@ -149,7 +161,7 @@ export async function GET(
       const quizMark = assessment ? assessment.quiz_mark : 0;
 
       // Map exams: Midterm and Final
-    
+
 const midtermExam = student.studentExams.find(
   (se) =>
     se.exam.course_id === result.course_id &&
@@ -164,7 +176,7 @@ const finalExam = student.studentExams.find(
     se.exam.semester_id === result.semester_id &&
     se.exam.exam_type === ExamType.FINAL
 );
-      
+
       const finalMark = finalExam ? finalExam.marks : 0;
 
       semesterMap.get(semesterId)!.courses.push({
@@ -252,12 +264,6 @@ const finalExam = student.studentExams.find(
     });
   } catch (error) {
     console.error("Error generating transcript:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal Server Error",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to generate transcript");
   }
 }

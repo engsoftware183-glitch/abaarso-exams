@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // BULK UPLOAD STUDENT EXAMS
@@ -10,6 +12,16 @@ export async function POST(
   req: NextRequest
 ) {
   try {
+
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
 
     // =========================================
     // GET BODY
@@ -42,16 +54,6 @@ export async function POST(
       );
     }
 
-
-
-
-
-
-
-
-
-
-
 // =========================================
 // VALIDATE EACH ITEM
 // =========================================
@@ -81,18 +83,6 @@ for (const item of studentExams) {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
     // =========================================
     // CREATE MANY
@@ -149,16 +139,6 @@ for (const item of studentExams) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Internal Server Error",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to upload student exams");
   }
 }

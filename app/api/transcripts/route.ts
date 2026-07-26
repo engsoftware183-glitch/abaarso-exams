@@ -1,10 +1,21 @@
-
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ResultStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     // Fetch students that have at least one PUBLISHED result.
     // Sorted by student_id descending.
     const students = await prisma.student.findMany({
@@ -88,15 +99,9 @@ export async function GET() {
         transcripts: transcripts,
       },
       { status: 200 }
-        );
+    );
   } catch (error) {
     console.error("Error fetching transcripts list:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal Server Error",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to fetch transcripts");
   }
 }

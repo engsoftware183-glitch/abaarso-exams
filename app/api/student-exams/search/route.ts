@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // SEARCH STUDENT EXAMS
@@ -7,6 +9,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     // =========================================
     // GET SEARCH QUERY
     // =========================================
@@ -60,7 +72,7 @@ export async function GET(req: NextRequest) {
                 },
               },
             },
-            
+
           ],
         },
 
@@ -110,15 +122,6 @@ export async function GET(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Internal Server Error",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to search student exams");
   }
 }

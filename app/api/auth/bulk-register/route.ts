@@ -6,10 +6,8 @@ import {
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-
-import {
-  Role,
-} from "@prisma/client";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 // ======================================================
@@ -20,6 +18,16 @@ export async function POST(
   req: NextRequest
 ) {
   try {
+
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
 
     // =========================================
     // GET BODY
@@ -56,6 +64,8 @@ export async function POST(
     // FORMAT USERS
     // =========================================
 
+    // Bulk registration must never allow the caller to choose a role
+    // per row (ADMIN/SUPER_ADMIN) - every row is created as STUDENT.
     const formattedUsers =
       await Promise.all(
 
@@ -65,7 +75,6 @@ export async function POST(
               username: string;
               email: string;
               password: string;
-              role: Role;
             }
           ) => ({
 
@@ -87,8 +96,7 @@ export async function POST(
                 10
               ),
 
-            role:
-              user.role as Role,
+            role: "STUDENT" as const,
           })
         )
 
@@ -133,16 +141,6 @@ export async function POST(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Failed to register users",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to register users");
   }
 }

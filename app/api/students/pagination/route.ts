@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 // ======================================================
@@ -17,37 +18,10 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token =
-      authHeader.split(" ")[1];
-
-    const decoded =
-      verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================
@@ -124,16 +98,6 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Failed to paginate students",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to paginate students");
   }
 }

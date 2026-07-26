@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // BULK UPLOAD ATTENDANCE
@@ -7,6 +9,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const body = await req.json();
 
     const { attendances } = body;
@@ -74,13 +86,6 @@ export async function POST(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to bulk upload attendance",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to bulk upload attendance");
   }
 }

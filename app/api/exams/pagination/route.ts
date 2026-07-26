@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // PAGINATION EXAMS
@@ -9,6 +11,16 @@ export async function GET(
   req: NextRequest
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const page = Number(
       req.nextUrl.searchParams.get(
         "page"
@@ -74,14 +86,6 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Failed to fetch exams",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to fetch exams");
   }
 }

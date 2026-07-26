@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 // ======================================================
@@ -21,37 +22,10 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token =
-      authHeader.split(" ")[1];
-
-    const decoded =
-      verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================
@@ -65,7 +39,16 @@ export async function GET(
         },
 
         include: {
-          user: true,
+          user: {
+            select: {
+              user_id: true,
+              username: true,
+              email: true,
+              role: true,
+              created_at: true,
+              updated_at: true,
+            },
+          },
         },
       });
 
@@ -98,16 +81,7 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to fetch admin",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to fetch admin");
   }
 }
 
@@ -128,55 +102,10 @@ export async function PUT(
     // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req, ["SUPER_ADMIN"]);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token =
-      authHeader.split(" ")[1];
-
-    const decoded =
-      verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // =========================================
-    // SUPER ADMIN ONLY
-    // =========================================
-
-    if (
-      decoded.role !== "SUPER_ADMIN"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================
@@ -257,6 +186,15 @@ export async function PUT(
             role ||
             existingAdmin.user.role,
         },
+
+        select: {
+          user_id: true,
+          username: true,
+          email: true,
+          role: true,
+          created_at: true,
+          updated_at: true,
+        },
       });
 
     return NextResponse.json(
@@ -279,16 +217,7 @@ export async function PUT(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to update admin",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to update admin");
   }
 }
 
@@ -309,55 +238,10 @@ export async function DELETE(
     // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req, ["SUPER_ADMIN"]);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token =
-      authHeader.split(" ")[1];
-
-    const decoded =
-      verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // =========================================
-    // SUPER ADMIN ONLY
-    // =========================================
-
-    if (
-      decoded.role !== "SUPER_ADMIN"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================
@@ -384,24 +268,22 @@ export async function DELETE(
     }
 
     // =========================================
-    // DELETE ADMIN
+    // DELETE ADMIN + USER (ATOMIC)
     // =========================================
 
-    await prisma.admin.delete({
-      where: {
-        admin_id: Number(id),
-      },
-    });
+    await prisma.$transaction([
+      prisma.admin.delete({
+        where: {
+          admin_id: Number(id),
+        },
+      }),
 
-    // =========================================
-    // DELETE USER
-    // =========================================
-
-    await prisma.user.delete({
-      where: {
-        user_id: admin.user_id,
-      },
-    });
+      prisma.user.delete({
+        where: {
+          user_id: admin.user_id,
+        },
+      }),
+    ]);
 
     return NextResponse.json(
       {
@@ -421,15 +303,6 @@ export async function DELETE(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to delete admin",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to delete admin");
   }
 }

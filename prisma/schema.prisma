@@ -108,7 +108,7 @@ model Department {
 
   faculty_id Int
 
-  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Restrict)
 
   students Student[]
   courses  Course[]
@@ -130,9 +130,9 @@ model Semester {
 
   faculty_id Int
 
-  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Cascade)
+  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Restrict)
 
-  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Restrict)
 
   courses Course[]
 
@@ -182,9 +182,9 @@ model Course {
   // RELATIONS
   // =========================================
 
-  department Department @relation(fields: [department_id], references: [department_id], onDelete: Cascade)
+  department Department @relation(fields: [department_id], references: [department_id], onDelete: Restrict)
 
-  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Restrict)
 
   // =========================================
   // ATTENDANCE RELATION
@@ -270,13 +270,13 @@ model Student {
   // RELATIONS
   // =========================================
 
-  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Cascade)
+  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Restrict)
 
-  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Restrict)
 
-  department Department @relation(fields: [department_id], references: [department_id], onDelete: Cascade)
+  department Department @relation(fields: [department_id], references: [department_id], onDelete: Restrict)
 
-  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Restrict)
 
   // =========================================
   // ATTENDANCE RELATION
@@ -327,7 +327,7 @@ model Attendance {
 
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
-  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Restrict)
 
   created_at DateTime @default(now())
 
@@ -352,7 +352,7 @@ model Assessment {
 
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
-  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Restrict)
 
   created_at DateTime @default(now())
 
@@ -380,13 +380,13 @@ model Exam {
 
   course_id Int
 
-  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Cascade)
+  academic Academic @relation(fields: [academic_id], references: [academic_id], onDelete: Restrict)
 
-  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [faculty_id], references: [faculty_id], onDelete: Restrict)
 
-  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Restrict)
 
-  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Restrict)
 
   studentExams StudentExam[]
 
@@ -460,9 +460,9 @@ model Result {
 
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
-  course Course @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+  course Course @relation(fields: [course_id], references: [course_id], onDelete: Restrict)
 
-  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Cascade)
+  semester Semester @relation(fields: [semester_id], references: [semester_id], onDelete: Restrict)
 
   // =========================================
   // TIMESTAMPS

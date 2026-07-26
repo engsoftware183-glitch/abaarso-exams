@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // GET SINGLE ATTENDANCE
@@ -10,6 +12,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { id } = await params;
 
     const attendance =
@@ -47,14 +59,7 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to fetch attendance",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to fetch attendance");
   }
 }
 
@@ -67,6 +72,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { id } = await params;
 
     const body = await req.json();
@@ -129,14 +144,7 @@ export async function PUT(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to update attendance",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to update attendance");
   }
 }
 
@@ -149,6 +157,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { id } = await params;
 
     const existingAttendance =
@@ -188,13 +206,6 @@ export async function DELETE(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to delete attendance",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to delete attendance");
   }
 }

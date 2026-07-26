@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ResultStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // SEARCH TRANSCRIPTS
@@ -8,6 +10,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     // =========================================
     // GET SEARCH QUERY
     // =========================================
@@ -188,16 +200,6 @@ export async function GET(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Failed to search transcripts",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to search transcripts");
   }
 }

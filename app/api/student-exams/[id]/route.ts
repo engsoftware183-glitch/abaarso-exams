@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // GET SINGLE STUDENT EXAM
@@ -14,6 +16,16 @@ export async function GET(
   }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const params = await context.params;
 
     const studentExam = await prisma.studentExam.findUnique({
@@ -63,13 +75,7 @@ export async function GET(
   } catch (error) {
     console.log("GET_STUDENT_EXAM_ERROR", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch Student Exam",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to fetch Student Exam");
   }
 }
 
@@ -86,6 +92,16 @@ export async function PUT(
   }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const params = await context.params;
 
     const body = await req.json();
@@ -173,13 +189,7 @@ export async function PUT(
   } catch (error) {
     console.log("UPDATE_STUDENT_EXAM_ERROR", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to update Student Exam",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to update Student Exam");
   }
 }
 
@@ -196,6 +206,16 @@ export async function DELETE(
   }
 ) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const params = await context.params;
 
     const studentExam = await prisma.studentExam.findUnique({
@@ -230,12 +250,6 @@ export async function DELETE(
   } catch (error) {
     console.log("DELETE_STUDENT_EXAM_ERROR", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to delete Student Exam",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to delete Student Exam");
   }
 }

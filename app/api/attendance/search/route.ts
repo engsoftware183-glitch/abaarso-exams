@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // SEARCH ATTENDANCE
@@ -7,6 +9,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { searchParams } = new URL(req.url);
 
     const search =
@@ -57,12 +69,6 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.log("SEARCH_ATTENDANCE_ERROR", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to search attendance",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to search attendance");
   }
 }

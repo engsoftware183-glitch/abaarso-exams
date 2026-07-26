@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 // ======================================================
@@ -16,51 +17,10 @@ export async function GET(req: NextRequest) {
     // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req, ["SUPER_ADMIN"]);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // =========================================
-    // SUPER ADMIN ONLY
-    // =========================================
-
-    if (decoded.role !== "SUPER_ADMIN") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================
@@ -105,15 +65,7 @@ export async function GET(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch admins",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to fetch admins");
   }
 }
 
@@ -129,51 +81,10 @@ export async function POST(req: NextRequest) {
     // AUTHORIZATION
     // =========================================
 
-    const authHeader =
-      req.headers.get("authorization");
+    const auth = requireAuth(req, ["SUPER_ADMIN"]);
 
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // =========================================
-    // SUPER ADMIN ONLY
-    // =========================================
-
-    if (decoded.role !== "SUPER_ADMIN") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
+    if (!auth.ok) {
+      return auth.response;
     }
 
     // =========================================
@@ -186,7 +97,6 @@ export async function POST(req: NextRequest) {
       username,
       email,
       password,
-      role,
     } = body;
 
     // =========================================
@@ -242,42 +152,46 @@ export async function POST(req: NextRequest) {
       await bcrypt.hash(password, 10);
 
     // =========================================
-    // CREATE USER
+    // CREATE USER + ADMIN (ATOMIC)
     // =========================================
-
-    const user =
-      await prisma.user.create({
-        data: {
-          username,
-          email,
-          password: hashedPassword,
-          role: role || "ADMIN",
-        },
-      });
-
-    // =========================================
-    // CREATE ADMIN
-    // =========================================
+    //
+    // This endpoint's sole purpose is creating admins, so role is
+    // always "ADMIN" - never client-controlled (prevents creating a
+    // SUPER_ADMIN or STUDENT through the admin-creation endpoint).
+    // User + Admin are created in a single transaction so a failure
+    // partway through never leaves an orphaned User row.
 
     const admin =
-      await prisma.admin.create({
+      await prisma.$transaction(async (tx) => {
+        const user =
+          await tx.user.create({
+            data: {
+              username,
+              email,
+              password: hashedPassword,
+              role: "ADMIN",
+            },
+          });
 
-        data: {
-          user_id: user.user_id,
-        },
+        return tx.admin.create({
 
-        include: {
-          user: {
-            select: {
-              user_id: true,
-              username: true,
-              email: true,
-              role: true,
-              created_at: true,
-              updated_at: true,
+          data: {
+            user_id: user.user_id,
+          },
+
+          include: {
+            user: {
+              select: {
+                user_id: true,
+                username: true,
+                email: true,
+                role: true,
+                created_at: true,
+                updated_at: true,
+              },
             },
           },
-        },
+        });
       });
 
     // =========================================
@@ -305,16 +219,6 @@ export async function POST(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Failed to create admin",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to create admin");
   }
 }

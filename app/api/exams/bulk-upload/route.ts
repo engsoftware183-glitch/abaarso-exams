@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 type ExamInput = {
   exam_type: ExamType;
@@ -18,6 +20,16 @@ type ExamInput = {
 
 export async function POST(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const body = await req.json();
 
     const { exams } = body;
@@ -82,13 +94,6 @@ export async function POST(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to bulk upload exams",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to bulk upload exams");
   }
 }

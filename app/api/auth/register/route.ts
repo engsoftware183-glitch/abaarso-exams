@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 // ======================================================
@@ -23,7 +24,6 @@ export async function POST(
       username,
       email,
       password,
-      role,
     } = body;
 
     // =========================================
@@ -108,6 +108,8 @@ if (existingUser) {
     // CREATE USER
     // =========================================
 
+    // Public self-registration must never allow the caller to choose
+    // their own role (ADMIN/SUPER_ADMIN) - always STUDENT.
     const user =
       await prisma.user.create({
         data: {
@@ -117,8 +119,7 @@ if (existingUser) {
           password:
             hashedPassword,
 
-          role:
-            role || "STUDENT",
+          role: "STUDENT",
         },
       });
 
@@ -162,16 +163,6 @@ if (existingUser) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          "Internal Server Error",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Internal Server Error");
   }
 }

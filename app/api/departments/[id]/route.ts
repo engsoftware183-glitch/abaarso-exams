@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 
 // ======================================================
@@ -17,6 +18,16 @@ export async function GET(
   }
 ) {
   try {
+
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
 
     // =========================================
     // GET PARAMS
@@ -77,16 +88,7 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to fetch department",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to fetch department");
   }
 }
 
@@ -106,67 +108,21 @@ export async function PUT(
   try {
 
     // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    // =========================================
     // GET PARAMS
     // =========================================
 
     const params =
       await context.params;
-
-    // =========================================
-    // AUTHORIZATION
-    // =========================================
-
-    const authHeader =
-      req.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token =
-      authHeader.split(" ")[1];
-
-    const decoded =
-      verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // =========================================
-    // ONLY ADMINS
-    // =========================================
-
-    if (
-      decoded.role !== "SUPER_ADMIN" &&
-      decoded.role !== "ADMIN"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
 
     // =========================================
     // REQUEST BODY
@@ -225,16 +181,7 @@ export async function PUT(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to update department",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to update department");
   }
 }
 
@@ -254,66 +201,21 @@ export async function DELETE(
   try {
 
     // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
+    // =========================================
     // GET PARAMS
     // =========================================
 
     const params =
       await context.params;
-
-    // =========================================
-    // AUTHORIZATION
-    // =========================================
-
-    const authHeader =
-      req.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token =
-      authHeader.split(" ")[1];
-
-    const decoded =
-      verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid token",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // =========================================
-    // ONLY SUPER ADMIN
-    // =========================================
-
-    if (
-      decoded.role !== "SUPER_ADMIN"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
 
     // =========================================
     // DELETE DEPARTMENT
@@ -345,15 +247,6 @@ export async function DELETE(
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to delete department",
-      },
-      {
-        status: 500,
-      }
-    );
+    return prismaErrorResponse(error, "Failed to delete department");
   }
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
 // CREATE EXAM
@@ -7,6 +9,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const body = await req.json();
 
     const {
@@ -79,14 +91,7 @@ export async function POST(req: NextRequest) {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to create exam",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to create exam");
   }
 }
 
@@ -94,8 +99,18 @@ export async function POST(req: NextRequest) {
 // GET ALL EXAMS
 // ======================================================
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(req);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const exams =
       await prisma.exam.findMany({
         include: {
@@ -144,13 +159,6 @@ export async function GET() {
       error
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to fetch exams",
-      },
-      { status: 500 }
-    );
+    return prismaErrorResponse(error, "Failed to fetch exams");
   }
 }

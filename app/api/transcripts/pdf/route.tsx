@@ -6,9 +6,20 @@ import QRCode from "qrcode";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import TranscriptTemplate from "@/pdf/transcript.template";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
+    // =========================================
+    // AUTHORIZATION
+    // =========================================
+
+    const auth = requireAuth(request);
+
+    if (!auth.ok) {
+      return auth.response;
+    }
+
     const { searchParams } = new URL(request.url);
     const studentIdParam = searchParams.get("student_id");
 
