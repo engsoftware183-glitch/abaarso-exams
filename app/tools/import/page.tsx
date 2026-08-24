@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { ImportFlow } from "@/components/import/ImportFlow";
 
 export default function ImportDataPage() {
-  return <ModulePage config={getModuleConfig("tools")} variant="Import Data" />;
+  return <ImportFlow />;
 }

@@ -1,11 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { ATTENDANCE_IMPORT_FIELDS, mapHeaders, missingRequiredHeaders } from "@/lib/import/import-config";
 
 // ======================================================
-// BULK UPLOAD ATTENDANCE
+// BULK UPLOAD ATTENDANCE (real CSV/XLSX import)
 // ======================================================
+//
+// Accepts parsed rows ({ headers, rows }) from the import UI and
+// validates every row against the real database:
+//   - required fields: student, course, attendance_mark, attendance_percent
+//   - student resolved by roll_no to real student_id - unknown values
+//     mark the row INVALID, never auto-created
+//   - course resolved by course_code to real course_id - unknown values
+//     mark the row INVALID, never auto-created
+//   - duplicate attendance (same student + course) against the DB and
+//     within the batch is marked SKIPPED
+//
+// dryRun: true validates and reports WITHOUT writing. The save path
+// inserts all VALID rows atomically.
+
+type ImportRowResult = {
+  rowNumber: number;
+  status: "VALID" | "INVALID" | "SKIPPED";
+  reasons: string[];
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,78 +35,223 @@ export async function POST(req: NextRequest) {
     // =========================================
 
     const auth = requireAuth(req, ["SUPER_ADMIN", "ADMIN"]);
-
     if (!auth.ok) {
       return auth.response;
     }
 
+    // =========================================
+    // REQUEST BODY
+    // =========================================
+
     const body = await req.json();
+    const { headers, rows, dryRun } = body as {
+      headers?: string[];
+      rows?: string[][];
+      dryRun?: boolean;
+    };
 
-    const { attendances } = body;
-
-    if (
-      !attendances ||
-      !Array.isArray(attendances)
-    ) {
+    if (!Array.isArray(headers) || !Array.isArray(rows)) {
       return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Attendances array is required",
-        },
+        { success: false, message: "Parsed headers and rows are required" },
         { status: 400 }
       );
     }
 
-    const formattedAttendances =
-      attendances.map(
-        (attendance: {
-          attendance_mark: number;
-          student_id: number;
-          course_id: number;
-        }) => ({
-          attendance_mark:
-            attendance.attendance_mark,
+    const dataRows = rows.filter((row) => row.some((cell) => String(cell ?? "").trim() !== ""));
 
-          attendance_percent:
-            Number(
-              attendance.attendance_mark
-            ) * 10,
-
-          student_id:
-            attendance.student_id,
-
-          course_id:
-            attendance.course_id,
-        })
+    if (dataRows.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "The file contains no data rows" },
+        { status: 400 }
       );
+    }
 
-    console.log(
-      "FORMATTED ATTENDANCES:",
-      formattedAttendances
+    if (dataRows.length > 500) {
+      return NextResponse.json(
+        { success: false, message: "The file exceeds the maximum of 500 rows" },
+        { status: 400 }
+      );
+    }
+
+    // =========================================
+    // HEADER VALIDATION
+    // =========================================
+
+    const missing = missingRequiredHeaders(headers, ATTENDANCE_IMPORT_FIELDS);
+    if (missing.length > 0) {
+      return NextResponse.json(
+        { success: false, message: `Missing required columns: ${missing.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    const fieldIndex = mapHeaders(headers, ATTENDANCE_IMPORT_FIELDS);
+
+    function valueAt(row: string[], key: string): string {
+      const index = fieldIndex.get(key);
+      if (index === undefined) return "";
+      return String(row[index] ?? "").trim();
+    }
+
+    // =========================================
+    // LOAD REFERENCE DATA (roll_no -> student_id, course_code -> course_id)
+    // =========================================
+
+    const [students, courses] = await Promise.all([
+      prisma.student.findMany({ select: { student_id: true, roll_no: true } }),
+      prisma.course.findMany({ select: { course_id: true, course_code: true } }),
+    ]);
+
+    const studentByRollNo = new Map(students.map((s) => [s.roll_no.trim().toLowerCase(), s.student_id]));
+    const courseByCode = new Map(courses.map((c) => [c.course_code.trim().toLowerCase(), c.course_id]));
+
+    // =========================================
+    // LOAD EXISTING ATTENDANCE (duplicate detection)
+    // =========================================
+
+    const existingAttendance = await prisma.attendance.findMany({
+      select: { student_id: true, course_id: true },
+    });
+    const existingAttendanceSet = new Set(
+      existingAttendance.map((a) => `${a.student_id}|${a.course_id}`)
     );
 
-    const createdAttendances =
-      await prisma.attendance.createMany({
-        data: formattedAttendances,
+    // =========================================
+    // ROW VALIDATION
+    // =========================================
+
+    const results: ImportRowResult[] = [];
+    const validRows: { attendance_mark: number; attendance_percent: number; student_id: number; course_id: number }[] = [];
+
+    const seenAttendance = new Set<string>();
+
+    dataRows.forEach((row, index) => {
+      const rowNumber = index + 2; // +1 for header, +1 for 1-based
+      const reasons: string[] = [];
+
+      const studentValue = valueAt(row, "student");
+      const courseValue = valueAt(row, "course");
+      const attendanceMarkValue = valueAt(row, "attendance_mark");
+      const attendancePercentValue = valueAt(row, "attendance_percent");
+
+      // required fields
+      if (!studentValue) reasons.push("missing required field: student");
+      if (!courseValue) reasons.push("missing required field: course");
+      if (!attendanceMarkValue) reasons.push("missing required field: attendance_mark");
+      if (!attendancePercentValue) reasons.push("missing required field: attendance_percent");
+
+      // student relationship resolution
+      const studentId = studentValue ? studentByRollNo.get(studentValue.toLowerCase()) : undefined;
+      if (studentValue && studentId === undefined) {
+        reasons.push(`unknown student: ${studentValue}`);
+      }
+
+      // course relationship resolution
+      const courseId = courseValue ? courseByCode.get(courseValue.toLowerCase()) : undefined;
+      if (courseValue && courseId === undefined) {
+        reasons.push(`unknown course: ${courseValue}`);
+      }
+
+      // numeric validation
+      const attendanceMark = Number(attendanceMarkValue);
+      const attendancePercent = Number(attendancePercentValue);
+      if (attendanceMarkValue && Number.isNaN(attendanceMark)) {
+        reasons.push("invalid attendance_mark (must be a number)");
+      }
+      if (attendancePercentValue && Number.isNaN(attendancePercent)) {
+        reasons.push("invalid attendance_percent (must be a number)");
+      }
+
+      // duplicates (only checked when relationships resolved)
+      if (studentId !== undefined && courseId !== undefined) {
+        const attendanceKey = `${studentId}|${courseId}`;
+        if (existingAttendanceSet.has(attendanceKey) || seenAttendance.has(attendanceKey)) {
+          reasons.push(
+            existingAttendanceSet.has(attendanceKey)
+              ? "attendance already exists for this student and course"
+              : "duplicate attendance in file"
+          );
+        }
+      }
+
+      // classification: duplicates are SKIPPED, other problems INVALID
+      const hasDuplicate = reasons.some(
+        (reason) => reason.includes("already exists") || reason.includes("duplicate")
+      );
+      const hasError = reasons.length > 0 && !hasDuplicate;
+
+      if (hasError) {
+        results.push({ rowNumber, status: "INVALID", reasons });
+        return;
+      }
+
+      if (hasDuplicate) {
+        results.push({ rowNumber, status: "SKIPPED", reasons });
+        return;
+      }
+
+      // VALID
+      const attendanceKey = `${studentId}|${courseId}`;
+      seenAttendance.add(attendanceKey);
+
+      results.push({ rowNumber, status: "VALID", reasons: [] });
+      validRows.push({
+        attendance_mark: attendanceMark,
+        attendance_percent: attendancePercent,
+        student_id: studentId as number,
+        course_id: courseId as number,
       });
+    });
 
-    return NextResponse.json(
-      {
-        success: true,
-        message:
-          "Attendance bulk upload successful",
+    const summary = {
+      totalRows: dataRows.length,
+      valid: validRows.length,
+      invalid: results.filter((r) => r.status === "INVALID").length,
+      skipped: results.filter((r) => r.status === "SKIPPED").length,
+    };
 
-        total: createdAttendances.count,
-      },
-      { status: 201 }
-    );
+    // =========================================
+    // DRY RUN (preview only - no writes)
+    // =========================================
+
+    if (dryRun) {
+      return NextResponse.json(
+        { success: true, dryRun: true, summary, results, imported: 0, failed: summary.invalid, skipped: summary.skipped },
+        { status: 200 }
+      );
+    }
+
+    if (validRows.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "No valid rows to import", summary, results, imported: 0, failed: summary.invalid, skipped: summary.skipped },
+        { status: 400 }
+      );
+    }
+
+    // =========================================
+    // SAVE (atomic createMany)
+    // =========================================
+
+    try {
+      const created = await prisma.attendance.createMany({ data: validRows });
+      return NextResponse.json(
+        {
+          success: true,
+          dryRun: false,
+          summary,
+          results: results.filter((r) => r.status !== "VALID"),
+          imported: created.count,
+          failed: summary.invalid,
+          skipped: summary.skipped,
+        },
+        { status: 201 }
+      );
+    } catch (error) {
+      console.log("BULK_UPLOAD_ATTENDANCE_SAVE_ERROR", error);
+      return prismaErrorResponse(error, "Failed to import attendance");
+    }
   } catch (error) {
-    console.log(
-      "BULK_ATTENDANCE_ERROR",
-      error
-    );
-
-    return prismaErrorResponse(error, "Failed to bulk upload attendance");
+    console.log("BULK_UPLOAD_ATTENDANCE_ERROR", error);
+    return prismaErrorResponse(error, "Failed to upload attendance");
   }
 }
