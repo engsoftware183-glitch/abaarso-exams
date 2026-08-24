@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState } from "@/components/ui/StateBlocks";
+import { ExportButton, ExportFormat } from "@/components/ui/ExportButton";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { getStoredUser } from "@/lib/auth-client";
 
@@ -167,6 +168,21 @@ export function DepartmentsReport() {
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
+  async function handleExport(format: ExportFormat) {
+    if (format === "print") {
+      window.print();
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (facultyFilter) params.set("faculty_id", facultyFilter);
+    if (departmentFilter) params.set("department_id", departmentFilter);
+    params.set("format", format);
+
+    const url = `/api/reports/departments/export?${params.toString()}`;
+    window.open(url, "_blank");
+  }
+
   if (!isManager) {
     return (
       <AppShell title="Department Report" description="Department-level performance metrics.">
@@ -184,6 +200,8 @@ export function DepartmentsReport() {
         {/* ============ TOOLBAR ============ */}
         <section className="rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
+            <ExportButton onExport={handleExport} />
+
             <select
               className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold"
               aria-label="Filter by faculty"

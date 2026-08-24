@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState } from "@/components/ui/StateBlocks";
+import { ExportButton, ExportFormat } from "@/components/ui/ExportButton";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { getStoredUser } from "@/lib/auth-client";
 
@@ -175,6 +176,22 @@ export function SemestersReport() {
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
+  async function handleExport(format: ExportFormat) {
+    if (format === "print") {
+      window.print();
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (academicFilter) params.set("academic_id", academicFilter);
+    if (facultyFilter) params.set("faculty_id", facultyFilter);
+    if (semesterFilter) params.set("semester_id", semesterFilter);
+    params.set("format", format);
+
+    const url = `/api/reports/semesters/export?${params.toString()}`;
+    window.open(url, "_blank");
+  }
+
   if (!isManager) {
     return (
       <AppShell title="Semester Report" description="Semester-level performance metrics.">
@@ -192,6 +209,8 @@ export function SemestersReport() {
         {/* ============ TOOLBAR ============ */}
         <section className="rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
+            <ExportButton onExport={handleExport} />
+
             <select
               className="h-10 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold"
               aria-label="Filter by academic year"

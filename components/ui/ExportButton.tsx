@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Download, ChevronDown, Loader2 } from "lucide-react";
+import { Download, ChevronDown, Loader2, Printer } from "lucide-react";
 
 // ======================================================
 // EXPORT BUTTON
@@ -18,7 +18,7 @@ import { Download, ChevronDown, Loader2 } from "lucide-react";
 //   - Responsive: uses relative units, no fixed widths
 //   - Uses existing ATU color tokens from Button.tsx
 
-export type ExportFormat = "csv" | "xlsx";
+export type ExportFormat = "csv" | "xlsx" | "pdf" | "print";
 
 type ExportButtonProps = {
   /** Called when the user selects a format. Must return a Promise. */
@@ -129,10 +129,29 @@ export function ExportButton({
             role="option"
             aria-selected={false}
             type="button"
-            className={`${buttonBase} ${secondaryStyle} w-full justify-start rounded-none border-0`}
+            className={`${buttonBase} ${secondaryStyle} w-full justify-start rounded-none border-0 border-b border-[#E5E7EB]`}
             onClick={() => void handleSelect("xlsx")}
           >
             Excel (.xlsx)
+          </button>
+          <button
+            role="option"
+            aria-selected={false}
+            type="button"
+            className={`${buttonBase} ${secondaryStyle} w-full justify-start rounded-none border-0 border-b border-[#E5E7EB]`}
+            onClick={() => void handleSelect("pdf")}
+          >
+            PDF
+          </button>
+          <button
+            role="option"
+            aria-selected={false}
+            type="button"
+            className={`${buttonBase} ${secondaryStyle} w-full justify-start rounded-none`}
+            onClick={() => void handleSelect("print")}
+          >
+            <Printer className="h-4 w-4" aria-hidden="true" />
+            Print
           </button>
         </div>
       )}

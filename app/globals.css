@@ -126,3 +126,27 @@ textarea {
   position: relative;
   z-index: 2;
 }
+
+@media print {
+  nav,
+  aside,
+  header,
+  .fixed,
+  [class*="sidebar"],
+  [class*="topbar"],
+  [class*="header"],
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  main,
+  [role="main"] {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

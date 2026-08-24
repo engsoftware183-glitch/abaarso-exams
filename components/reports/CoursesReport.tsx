@@ -5,6 +5,7 @@ import { Filter, Search } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState } from "@/components/ui/StateBlocks";
+import { ExportButton, ExportFormat } from "@/components/ui/ExportButton";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { getStoredUser } from "@/lib/auth-client";
 
@@ -161,6 +162,23 @@ export function CoursesReport() {
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
+  async function handleExport(format: ExportFormat) {
+    if (format === "print") {
+      window.print();
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    params.set("format", format);
+
+    const url = `/api/reports/courses/export?${params.toString()}`;
+    window.open(url, "_blank");
+  }
+
   if (!isManager) {
     return (
       <AppShell title="Course Report" description="List of courses with department and semester details.">
@@ -186,6 +204,7 @@ export function CoursesReport() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <ExportButton onExport={handleExport} />
               {filterApis.map((filter) => (
                 <select
                   key={filter.key}

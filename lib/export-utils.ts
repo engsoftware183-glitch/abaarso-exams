@@ -14,8 +14,14 @@
 // EXCEL
 // - Uses the already-installed xlsx@0.18.5 package (same one
 //   used by the Import system). No additional library.
+//
+// PDF
+// - Uses the already-installed @react-pdf/renderer package
+//   (same one used by the transcript). No additional library.
 
 import * as XLSX from "xlsx";
+import fs from "fs";
+import path from "path";
 
 // ======================================================
 // CSV HELPERS
@@ -113,7 +119,7 @@ export function buildXlsxBuffer(
  * Generate a filename such as "students-export-2026-08-24.csv"
  * The date is always UTC today so filenames are deterministic.
  */
-export function buildExportFilename(module: string, format: "csv" | "xlsx"): string {
+export function buildExportFilename(module: string, format: "csv" | "xlsx" | "pdf"): string {
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   return `${module}-export-${today}.${format}`;
 }
@@ -124,3 +130,33 @@ export function buildExportFilename(module: string, format: "csv" | "xlsx"): str
 
 /** Maximum rows returned by a single export request. */
 export const EXPORT_MAX_ROWS = 5000;
+
+// ======================================================
+// PDF HELPERS
+// ======================================================
+
+const ATU_LOGO_PATH = path.join(process.cwd(), "public", "images", "atu-logo.png");
+
+let cachedLogo: string | null = null;
+
+/**
+ * Load the ATU logo as a Base64 data URL.
+ * Cached after the first read so repeated calls within the same
+ * server process do not hit the filesystem again.
+ */
+export function loadAtuLogo(): string {
+  if (cachedLogo) return cachedLogo;
+
+  try {
+    if (fs.existsSync(ATU_LOGO_PATH)) {
+      const buffer = fs.readFileSync(ATU_LOGO_PATH);
+      cachedLogo = `data:image/png;base64,${buffer.toString("base64")}`;
+    } else {
+      cachedLogo = "";
+    }
+  } catch {
+    cachedLogo = "";
+  }
+
+  return cachedLogo;
+}

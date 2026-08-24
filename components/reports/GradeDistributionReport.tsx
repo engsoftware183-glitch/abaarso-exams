@@ -14,6 +14,7 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState } from "@/components/ui/StateBlocks";
+import { ExportButton, ExportFormat } from "@/components/ui/ExportButton";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { getStoredUser } from "@/lib/auth-client";
 
@@ -157,6 +158,22 @@ export function GradeDistributionReport() {
 
   const hasFilters = Object.values(filters).some(Boolean);
 
+  async function handleExport(format: ExportFormat) {
+    if (format === "print") {
+      window.print();
+      return;
+    }
+
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    params.set("format", format);
+
+    const url = `/api/reports/grade-distribution/export?${params.toString()}`;
+    window.open(url, "_blank");
+  }
+
   if (!isManager) {
     return (
       <AppShell
@@ -180,6 +197,7 @@ export function GradeDistributionReport() {
         {/* ============ TOOLBAR ============ */}
         <section className="rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
+            <ExportButton onExport={handleExport} />
             {filterApis.map((filter) => (
               <select
                 key={filter.key}
