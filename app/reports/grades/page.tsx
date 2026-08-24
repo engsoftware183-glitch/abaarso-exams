@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { GradeDistributionReport } from "@/components/reports/GradeDistributionReport";
 
 export default function GradeReportsPage() {
-  return <ModulePage config={getModuleConfig("reports")} variant="Grade Distribution" />;
+  return <GradeDistributionReport />;
 }

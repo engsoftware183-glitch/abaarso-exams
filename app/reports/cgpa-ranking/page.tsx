@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { CgpaRankingReport } from "@/components/reports/CgpaRankingReport";
 
 export default function CgpaRankingPage() {
-  return <ModulePage config={getModuleConfig("reports")} variant="CGPA Ranking" />;
+  return <CgpaRankingReport />;
 }

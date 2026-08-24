@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { DepartmentsReport } from "@/components/reports/DepartmentsReport";
 
 export default function DepartmentReportsPage() {
-  return <ModulePage config={getModuleConfig("reports")} variant="Department Performance" />;
+  return <DepartmentsReport />;
 }

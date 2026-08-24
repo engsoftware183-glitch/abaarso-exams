@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { PassFailReport } from "@/components/reports/PassFailReport";
 
 export default function PassFailReportsPage() {
-  return <ModulePage config={getModuleConfig("reports")} variant="Pass and Fail" />;
+  return <PassFailReport />;
 }
