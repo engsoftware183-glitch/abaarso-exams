@@ -21,7 +21,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { getAuthToken, getStoredUser, logout } from "@/lib/auth-client";
-import type { AuthUser, UserRole } from "@/types/api";
+import { apiClient } from "@/lib/api-client";
+import type { AuthUser, UserRole, Notification } from "@/types/api";
 
 type AppShellProps = {
   children: ReactNode;
@@ -43,6 +44,8 @@ function ShellContent({ children, title, description }: AppShellProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifyLoading, setNotifyLoading] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -70,6 +73,31 @@ function ShellContent({ children, title, description }: AppShellProps) {
   useEffect(() => {
     localStorage.setItem("atu_sidebar_collapsed", String(collapsed));
   }, [collapsed]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setNotifyLoading(true);
+    apiClient
+      .get<{ success: boolean; count: number; notifications: Notification[] }>("/api/notifications")
+      .then((data) => {
+        if (!cancelled) {
+          setNotifications(data.notifications ?? []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNotifications([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setNotifyLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // authChecked is only true once a valid session was found, so the
   // fallback below is unreachable at runtime - the role-dependent shell
@@ -228,9 +256,46 @@ function ShellContent({ children, title, description }: AppShellProps) {
                 <Bell className="h-5 w-5" />
               </button>
               {notifyOpen ? (
-                <div className="absolute right-0 mt-2 w-72 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-xl">
-                  <p className="text-sm font-bold">Notifications</p>
-                  <p className="mt-2 text-sm text-[#6B7280]">No new system alerts.</p>
+                <div className="absolute right-0 mt-2 w-80 rounded-lg border border-[#E5E7EB] bg-white p-0 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
+                    <p className="text-sm font-bold">Notifications</p>
+                    <Link href="/notifications" className="text-xs font-semibold text-[#B03060] hover:underline" onClick={() => setNotifyOpen(false)}>
+                      View all
+                    </Link>
+                  </div>
+                  {notifyLoading ? (
+                    <div className="p-4">
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                          <div key={index} className="h-10 animate-pulse rounded bg-gray-100" />
+                        ))}
+                      </div>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <p className="p-4 text-sm text-[#6B7280]">No notifications yet.</p>
+                  ) : (
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.slice(0, 5).map((notification) => (
+                        <Link
+                          key={notification.notification_id}
+                          href="/notifications"
+                          className="block border-b border-[#E5E7EB] px-4 py-3 last:border-b-0 hover:bg-[#F9FAFB]"
+                          onClick={() => setNotifyOpen(false)}
+                        >
+                          <p className="text-sm font-bold text-[#111827]">{notification.title}</p>
+                          <p className="mt-0.5 truncate text-xs text-[#6B7280]">{notification.message}</p>
+                          <p className="mt-1 text-[0.65rem] text-[#9CA3AF]">
+                            {new Date(notification.created_at).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>

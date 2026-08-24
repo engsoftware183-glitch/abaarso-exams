@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  Bell,
   BookOpen,
   Building2,
   Calculator,
@@ -49,7 +50,10 @@ export const navGroups: NavGroup[] = [
   },
   {
     label: "Main",
-    items: [{ label: "Dashboard", href: "/dashboard", icon: Home, roles: ["SUPER_ADMIN", "ADMIN"] }],
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: Home, roles: ["SUPER_ADMIN", "ADMIN"] },
+      { label: "Notifications", href: "/notifications", icon: Bell, roles: ["SUPER_ADMIN", "ADMIN", "STUDENT"] },
+    ],
   },
   {
     label: "Academic Management",

@@ -24,3 +24,10 @@ export type ApiErrorPayload = {
   message?: string;
   recoveryAvailable?: boolean;
 };
+
+export type Notification = {
+  notification_id: number;
+  title: string;
+  message: string;
+  created_at: string;
+};
