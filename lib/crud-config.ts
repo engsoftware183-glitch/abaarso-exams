@@ -93,6 +93,12 @@ export type CrudConfig = {
   fields: CrudField[];
   filters?: CrudFilter[];
   details: CrudDetail[];
+  /**
+   * When set, an Export button is shown in the toolbar for managers.
+   * The value is the API path for the export endpoint
+   * (e.g. "/api/students/export").
+   */
+  exportPath?: string;
 };
 
 const genderOptions: CrudOption[] = [
@@ -314,6 +320,7 @@ export const coursesConfig: CrudConfig = {
   entity: "Course",
   entityPlural: "Courses",
   apiPath: "/api/courses",
+  exportPath: "/api/courses/export",
   recordsKey: "courses",
   idKey: "course_id",
   searchPlaceholder: "Search courses…",
@@ -422,6 +429,7 @@ export const studentsConfig: CrudConfig = {
   entity: "Student",
   entityPlural: "Students",
   apiPath: "/api/students",
+  exportPath: "/api/students/export",
   recordsKey: "students",
   idKey: "student_id",
   searchPlaceholder: "Search students…",
@@ -948,6 +956,7 @@ export const resultsConfig: CrudConfig = {
   entity: "Result",
   entityPlural: "Results",
   apiPath: "/api/results",
+  exportPath: "/api/results/export",
   recordsKey: "results",
   idKey: "result_id",
   searchPlaceholder: "Search by student, course, or grade…",

@@ -18,6 +18,7 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ExportButton, type ExportFormat } from "@/components/ui/ExportButton";
 import { EmptyState, ErrorState } from "@/components/ui/StateBlocks";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { getStoredUser } from "@/lib/auth-client";
@@ -538,6 +539,65 @@ export function CrudModule({ config }: { config: CrudConfig }) {
     setSearch("");
   }
 
+  // ============================================================
+  // EXPORT HANDLER
+  // ============================================================
+  //
+  // Builds the same query params the pagination endpoint uses so
+  // the export always reflects the active search/filter state.
+  // The token is read from localStorage (same mechanism as
+  // apiClient.get) so the server-side export route can authorize
+  // the request.
+
+  async function handleExport(format: ExportFormat) {
+    if (!config.exportPath) return;
+
+    const params = new URLSearchParams({ format });
+    if (search) params.set("search", search);
+    config.filters?.forEach((filter) => {
+      const value = filters[filter.name];
+      if (value) params.set(filter.name, value);
+    });
+
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("atu_token") : null;
+
+    const response = await fetch(
+      `${config.exportPath}?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const payload = await response
+        .json()
+        .catch(() => ({ message: "Export failed" })) as { message?: string };
+      throw new Error(payload?.message ?? `Export failed (${response.status})`);
+    }
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("Content-Disposition") ?? "";
+    const nameMatch = contentDisposition.match(/filename="([^"]+)"/);
+    const filename =
+      nameMatch?.[1] ??
+      `${config.entityPlural.toLowerCase()}-export.${format}`;
+
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+
+    toast.success(`${config.entityPlural} exported successfully`);
+  }
+
   const hasFilters = Object.values(filters).some(Boolean);
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
@@ -598,6 +658,22 @@ export function CrudModule({ config }: { config: CrudConfig }) {
                   <Filter className="h-4 w-4" />
                   Clear filters
                 </Button>
+              ) : null}
+
+              {isManager && config.exportPath ? (
+                <ExportButton
+                  onExport={async (format) => {
+                    try {
+                      await handleExport(format);
+                    } catch (exportError) {
+                      toast.error(
+                        exportError instanceof Error
+                          ? exportError.message
+                          : "Export failed"
+                      );
+                    }
+                  }}
+                />
               ) : null}
 
               {isManager ? (
