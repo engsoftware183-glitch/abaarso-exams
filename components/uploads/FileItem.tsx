@@ -24,7 +24,7 @@ export function FileItem({ file, error, onRemove, onReplace, previewUrl }: FileI
   return (
     <div className="rounded-lg border border-[#E5E7EB] bg-white p-3">
       <div className="flex items-start gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-lg bg-[#DCFCE7] text-[#15803D]">
+        <div className="grid h-10 w-10 place-items-center rounded-lg bg-[#F5DBE5] text-[#701F3D]">
           <FileText className="h-5 w-5" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">

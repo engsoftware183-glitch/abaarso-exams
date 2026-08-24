@@ -1,6 +1,6 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { CrudModule } from "@/components/modules/CrudModule";
+import { studentsConfig } from "@/lib/crud-config";
 
 export default function NewStudentPage() {
-  return <ModulePage config={getModuleConfig("students")} variant="Register Student" />;
+  return <CrudModule config={studentsConfig} />;
 }

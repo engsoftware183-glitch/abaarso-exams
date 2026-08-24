@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { AdministratorsManager } from "@/components/admins/AdministratorsManager";
 
 export default function AdministratorsPage() {
-  return <ModulePage config={getModuleConfig("administrators")} />;
+  return <AdministratorsManager />;
 }

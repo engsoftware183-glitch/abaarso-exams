@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 export interface JwtPayload {
   id: string;
+  user_id: number;
+  username: string;
   email: string;
   role: string;
 }

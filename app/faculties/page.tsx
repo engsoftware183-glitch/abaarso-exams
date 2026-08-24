@@ -1,6 +1,6 @@
-import { ModulePage } from "@/components/modules/ModulePage";
-import { getModuleConfig } from "@/lib/module-config";
+import { CrudModule } from "@/components/modules/CrudModule";
+import { facultiesConfig } from "@/lib/crud-config";
 
 export default function FacultiesPage() {
-  return <ModulePage config={getModuleConfig("faculties")} />;
+  return <CrudModule config={facultiesConfig} />;
 }

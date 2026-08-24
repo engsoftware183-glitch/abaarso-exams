@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import type { Prisma } from "@prisma/client";
+import { requireStudentScope, examScopeWhere } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
@@ -15,32 +16,73 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
     }
 
-    const page = Number(
-      req.nextUrl.searchParams.get(
-        "page"
-      )
-    ) || 1;
+    // =========================================
+    // QUERY PARAMS
+    // =========================================
 
-    const limit = Number(
-      req.nextUrl.searchParams.get(
-        "limit"
-      )
-    ) || 10;
+    const searchParams = req.nextUrl.searchParams;
+
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 10));
 
     const skip =
       (page - 1) * limit;
 
+    const search = searchParams.get("search")?.trim();
+    const academicId = searchParams.get("academic_id")?.trim();
+    const facultyId = searchParams.get("faculty_id")?.trim();
+    const semesterId = searchParams.get("semester_id")?.trim();
+    const courseId = searchParams.get("course_id")?.trim();
+
+    // =========================================
+    // WHERE CLAUSE
+    // =========================================
+
+    const where: Prisma.ExamWhereInput = {
+      ...(examScopeWhere(auth.student) ?? {}),
+
+      ...(search
+        ? {
+            OR: [
+              {
+                course: {
+                  course_name: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              },
+              {
+                course: {
+                  course_code: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+
+      ...(academicId ? { academic_id: Number(academicId) } : {}),
+      ...(facultyId ? { faculty_id: Number(facultyId) } : {}),
+      ...(semesterId ? { semester_id: Number(semesterId) } : {}),
+      ...(courseId ? { course_id: Number(courseId) } : {}),
+    };
+
     const totalRecords =
-      await prisma.exam.count();
+      await prisma.exam.count({ where });
 
     const exams =
       await prisma.exam.findMany({
+        where,
         skip,
         take: limit,
 
@@ -71,6 +113,8 @@ export async function GET(
         page,
 
         limit,
+
+        total: totalRecords,
 
         totalRecords,
 

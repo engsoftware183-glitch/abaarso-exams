@@ -40,11 +40,41 @@ model User {
 
   role Role @default(STUDENT)
 
+  failed_login_attempts Int       @default(0)
+  locked_until           DateTime?
+
   student Student?
   admin   Admin?
 
+  passwordResetCodes PasswordResetCode[]
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+// ======================================================
+// PASSWORD RESET CODE
+// ======================================================
+
+model PasswordResetCode {
+  id Int @id @default(autoincrement())
+
+  user_id Int
+
+  code_hash String
+
+  expires_at DateTime
+
+  used_at DateTime?
+
+  verification_attempts Int @default(0)
+
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
 }
 
 // ======================================================

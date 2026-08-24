@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ResultStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
@@ -17,7 +17,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -45,16 +45,22 @@ export async function GET(
     // TOTAL RECORDS
     // =========================================
 
+    const where = {
+      ...(auth.student
+        ? { student_id: auth.student.student_id }
+        : {}),
+
+      results: {
+        some: {
+          status:
+            ResultStatus.PUBLISHED,
+        },
+      },
+    };
+
     const totalRecords =
       await prisma.student.count({
-        where: {
-          results: {
-            some: {
-              status:
-                ResultStatus.PUBLISHED,
-            },
-          },
-        },
+        where,
       });
 
     // =========================================
@@ -64,14 +70,7 @@ export async function GET(
     const students =
       await prisma.student.findMany({
 
-        where: {
-          results: {
-            some: {
-              status:
-                ResultStatus.PUBLISHED,
-            },
-          },
-        },
+        where,
 
         skip,
 

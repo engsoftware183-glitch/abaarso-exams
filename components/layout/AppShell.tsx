@@ -20,7 +20,7 @@ import { navGroups } from "@/components/layout/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
-import { getStoredUser, logout } from "@/lib/auth-client";
+import { getAuthToken, getStoredUser, logout } from "@/lib/auth-client";
 import type { AuthUser, UserRole } from "@/types/api";
 
 type AppShellProps = {
@@ -44,16 +44,36 @@ function ShellContent({ children, title, description }: AppShellProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
+  // Route protection: every authenticated page renders through this
+  // shell. The JWT lives in localStorage (it is never sent to the server
+  // on plain page navigation), so it cannot be validated by middleware -
+  // the client-side check below is the guard compatible with the existing
+  // JWT architecture. Unauthenticated visitors are redirected to /login
+  // and the shell is never rendered, so no page can impersonate
+  // SUPER_ADMIN without a valid session.
   useEffect(() => {
-    setUser(getStoredUser());
+    const token = getAuthToken();
+    const storedUser = getStoredUser();
+
+    if (!token || !storedUser) {
+      router.replace("/login");
+      return;
+    }
+
+    setUser(storedUser);
     setCollapsed(localStorage.getItem("atu_sidebar_collapsed") === "true");
-  }, []);
+    setAuthChecked(true);
+  }, [router]);
 
   useEffect(() => {
     localStorage.setItem("atu_sidebar_collapsed", String(collapsed));
   }, [collapsed]);
 
+  // authChecked is only true once a valid session was found, so the
+  // fallback below is unreachable at runtime - the role-dependent shell
+  // is never rendered without a logged-in user.
   const role = user?.role ?? "SUPER_ADMIN";
   const visibleGroups = useMemo(
     () =>
@@ -64,6 +84,12 @@ function ShellContent({ children, title, description }: AppShellProps) {
   );
   const breadcrumb = pathname.split("/").filter(Boolean).map((part) => part.replaceAll("-", " "));
 
+  // Render nothing until the session check above has resolved, so the
+  // role-dependent shell never flashes for unauthenticated visitors.
+  if (!authChecked) {
+    return null;
+  }
+
   async function handleLogout() {
     await logout();
     showToast("You have been logged out.");
@@ -72,12 +98,12 @@ function ShellContent({ children, title, description }: AppShellProps) {
 
   const sidebar = (
     <aside
-      className={`flex h-full flex-col bg-[#07110D] text-white transition-all ${collapsed ? "w-[5.5rem]" : "w-[18rem]"}`}
+      className={`flex h-full flex-col bg-[#200911] text-white transition-all ${collapsed ? "w-[5.5rem]" : "w-[18rem]"}`}
       aria-label="Main navigation"
     >
       <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
         <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white">
-          <Image src="/image.png" alt="ABAARSO TECH UNIVERSITY logo" fill className="object-contain p-1" priority />
+          <Image src="/images/atu-logo.png" alt="ABAARSO TECH UNIVERSITY logo" fill className="object-contain p-1" priority />
         </div>
         {!collapsed ? (
           <div className="min-w-0">
@@ -127,7 +153,7 @@ function ShellContent({ children, title, description }: AppShellProps) {
                         key={item.label}
                         href={item.href}
                         className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition ${
-                          active ? "bg-[#16A34A] text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+                          active ? "bg-[#B03060] text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
                         }`}
                         title={collapsed ? item.label : undefined}
                         onClick={() => setMobileOpen(false)}
@@ -210,7 +236,7 @@ function ShellContent({ children, title, description }: AppShellProps) {
             </div>
             <div className="relative">
               <button className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white p-1.5" onClick={() => setProfileOpen((value) => !value)}>
-                <span className="grid h-8 w-8 place-items-center rounded-md bg-[#DCFCE7] text-sm font-black text-[#15803D]">
+                <span className="grid h-8 w-8 place-items-center rounded-md bg-[#F5DBE5] text-sm font-black text-[#701F3D]">
                   {(user?.username ?? "ATU").slice(0, 1).toUpperCase()}
                 </span>
                 <span className="hidden text-left md:block">
@@ -222,12 +248,12 @@ function ShellContent({ children, title, description }: AppShellProps) {
                 <div className="absolute right-0 mt-2 w-72 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-xl">
                   <div className="flex gap-3 border-b border-[#E5E7EB] pb-3">
                     <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-white">
-                      <Image src="/image.png" alt="ATU profile logo" fill className="object-contain" />
+                      <Image src="/images/atu-logo.png" alt="ATU profile logo" fill className="object-contain" />
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold">{user?.username ?? "ATU User"}</p>
                       <p className="truncate text-xs text-[#6B7280]">{user?.email ?? "admin@atu.edu"}</p>
-                      <div className="mt-1"><Badge tone="green">{role}</Badge></div>
+                      <div className="mt-1"><Badge tone="maroon">{role}</Badge></div>
                     </div>
                   </div>
                   <Link className="mt-2 block rounded-md px-2 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile">Profile</Link>
@@ -244,11 +270,11 @@ function ShellContent({ children, title, description }: AppShellProps) {
         <main className="px-4 py-6 sm:px-6">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#15803D]">ABAARSO TECH UNIVERSITY</p>
+              <p className="text-xs font-black uppercase tracking-wide text-[#90274F]">ABAARSO TECH UNIVERSITY</p>
               <h1 className="mt-2 text-2xl font-black tracking-tight text-[#111827] sm:text-3xl">{title}</h1>
               {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6B7280]">{description}</p> : null}
             </div>
-            <Badge tone="green">{role}</Badge>
+            <Badge tone="maroon">{role}</Badge>
           </div>
           {children}
         </main>

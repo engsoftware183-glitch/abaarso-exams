@@ -24,11 +24,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {message ? (
         <div
-          className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-lg bg-[#07110D] px-4 py-3 text-sm font-semibold text-white shadow-xl"
+          className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-lg bg-[#340E1C] px-4 py-3 text-sm font-semibold text-white shadow-xl"
           role="status"
           aria-live="polite"
         >
-          <CheckCircle className="h-5 w-5 text-[#86EFAC]" aria-hidden="true" />
+          <CheckCircle className="h-5 w-5 text-[#7FB89C]" aria-hidden="true" />
           <span className="flex-1">{message}</span>
           <button aria-label="Dismiss notification" onClick={() => setMessage(null)}>
             <X className="h-4 w-4" aria-hidden="true" />

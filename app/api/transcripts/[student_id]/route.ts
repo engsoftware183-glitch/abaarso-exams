@@ -1,14 +1,14 @@
 
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ResultStatus, ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ student_id: string }> }
 ) {
   try {
@@ -16,7 +16,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(request);
+    const auth = await requireStudentScope(request);
 
     if (!auth.ok) {
       return auth.response;
@@ -33,6 +33,21 @@ export async function GET(
           error: "Invalid student ID. It must be a positive integer.",
         },
         { status: 400 }
+      );
+    }
+
+    // A STUDENT may only ever request their own transcript. The
+    // path student_id is client-supplied, so it is never trusted -
+    // it must match the student_id resolved from the verified JWT.
+    // Returning "not found" (not 403) avoids revealing whether
+    // another student's transcript exists.
+    if (auth.student && auth.student.student_id !== studentId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Student not found.",
+        },
+        { status: 404 }
       );
     }
 

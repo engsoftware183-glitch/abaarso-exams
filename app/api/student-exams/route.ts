@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
@@ -184,13 +185,17 @@ export async function GET(req: NextRequest) {
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
     }
 
     const studentExams = await prisma.studentExam.findMany({
+      where: auth.student
+        ? { student_id: auth.student.student_id }
+        : undefined,
+
       include: {
         student: {
           select: {

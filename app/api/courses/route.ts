@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -25,8 +26,14 @@ export async function GET(req: NextRequest) {
     // GET COURSES
     // =========================================
 
+    // A STUDENT only ever sees the courses of their own department -
+    // the same relationship used to scope exams and transcripts.
     const courses =
       await prisma.course.findMany({
+
+        where: auth.student
+          ? { department_id: auth.student.department_id }
+          : undefined,
 
         include: {
           department: true,

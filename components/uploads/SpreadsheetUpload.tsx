@@ -43,7 +43,7 @@ export function SpreadsheetUpload({ label = "Bulk upload spreadsheet" }: { label
       {fileName ? (
         <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
           <div className="flex items-center gap-3">
-            <FileSpreadsheet className="h-5 w-5 text-[#15803D]" aria-hidden="true" />
+            <FileSpreadsheet className="h-5 w-5 text-[#701F3D]" aria-hidden="true" />
             <span className="text-sm font-bold">{fileName}</span>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">

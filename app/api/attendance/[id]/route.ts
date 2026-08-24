@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
@@ -16,7 +17,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -24,10 +25,17 @@ export async function GET(
 
     const { id } = await params;
 
+    // Ownership check happens in the query itself (not a separate
+    // if-check after fetch) so a STUDENT requesting another
+    // student's record gets the same 404 as a nonexistent id -
+    // it never reveals whether the record exists.
     const attendance =
-      await prisma.attendance.findUnique({
+      await prisma.attendance.findFirst({
         where: {
           attendance_id: Number(id),
+          ...(auth.student
+            ? { student_id: auth.student.student_id }
+            : {}),
         },
 
         include: {

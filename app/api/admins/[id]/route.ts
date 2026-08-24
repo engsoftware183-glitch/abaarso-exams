@@ -21,8 +21,13 @@ export async function GET(
     // =========================================
     // AUTHORIZATION
     // =========================================
+    //
+    // Administrator records (username/email/role) are sensitive
+    // account data - only SUPER_ADMIN may read them. Previously this
+    // route accepted any authenticated role, allowing e.g. a STUDENT
+    // to fetch another user's admin profile.
 
-    const auth = requireAuth(req);
+    const auth = requireAuth(req, ["SUPER_ADMIN"]);
 
     if (!auth.ok) {
       return auth.response;
@@ -149,6 +154,39 @@ export async function PUT(
     } = body;
 
     // =========================================
+    // ROLE IS NEVER CLIENT-CONTROLLED
+    // =========================================
+    //
+    // This endpoint only supports editing an administrator's
+    // username/email/password - it never trusts a client-supplied
+    // role. Administrator management (Task 1) has no legitimate need
+    // to change role through this route: accounts reach this table
+    // already as "ADMIN" (via creation or promotion), and SUPER_ADMIN
+    // is a controlled bootstrap/privileged role that must never be
+    // reachable through normal administrator CRUD. If a caller sends
+    // a `role` that would actually change the account's current role,
+    // the request is rejected outright rather than silently ignored,
+    // so a client can never escalate (or demote) privileges this way.
+
+    if (
+      role !== undefined &&
+      role !== null &&
+      role !== "" &&
+      role !== existingAdmin.user.role
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Role cannot be changed through this endpoint",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // =========================================
     // HASH PASSWORD
     // =========================================
 
@@ -163,6 +201,10 @@ export async function PUT(
     // =========================================
     // UPDATE USER
     // =========================================
+    //
+    // role is intentionally omitted from `data` below - it is always
+    // left exactly as it currently is in the database, never taken
+    // from the request body.
 
     const updatedUser =
       await prisma.user.update({
@@ -181,10 +223,6 @@ export async function PUT(
             existingAdmin.user.email,
 
           password: hashedPassword,
-
-          role:
-            role ||
-            existingAdmin.user.role,
         },
 
         select: {
@@ -263,6 +301,27 @@ export async function DELETE(
         },
         {
           status: 404,
+        }
+      );
+    }
+
+    // =========================================
+    // PREVENT SELF-REMOVAL
+    // =========================================
+    //
+    // A SUPER_ADMIN must never be able to remove their own
+    // administrator access from the current session - this would be
+    // an unsafe/unrecoverable action if it were the only privileged
+    // account signed in.
+
+    if (admin.user_id === auth.decoded.user_id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "You cannot remove your own administrator account",
+        },
+        {
+          status: 400,
         }
       );
     }

@@ -18,11 +18,6 @@ export interface Student {
   faculty: string;
   department: string;
   academic_year: string;
-  programme?: string;
-  batch?: string;
-  admission_date?: string;
-  current_status?: string;
-  transcript_date?: string;
 }
 
 export interface Course {
@@ -66,9 +61,9 @@ export interface TranscriptProps {
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    backgroundColor: "#0B0F14",
+    backgroundColor: "#FFFFFF",
     fontFamily: "Helvetica",
-    color: "#FFFFFF",
+    color: "#111827",
     flexDirection: "column",
   },
   headerContainer: {
@@ -76,7 +71,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderBottomWidth: 2,
-    borderBottomColor: "#22C55E",
+    borderBottomColor: "#B03060",
     paddingBottom: 10,
     marginBottom: 15,
   },
@@ -94,21 +89,21 @@ const styles = StyleSheet.create({
   uniName: {
     fontSize: 18,
     fontFamily: "Helvetica-Bold",
-    color: "#22C55E",
+    color: "#90274F",
     letterSpacing: 1.5,
     textAlign: "center",
   },
   docTitle: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: "#FFFFFF",
+    color: "#111827",
     marginTop: 3,
     letterSpacing: 1,
     textAlign: "center",
   },
   facultyName: {
     fontSize: 9,
-    color: "#9CA3AF",
+    color: "#6B7280",
     marginTop: 2,
     textAlign: "center",
   },
@@ -122,20 +117,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 2,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   qrText: {
     fontSize: 6,
-    color: "#9CA3AF",
+    color: "#6B7280",
     marginTop: 3,
     textAlign: "center",
   },
   studentCard: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#E5E7EB",
     borderRadius: 6,
     padding: 10,
     marginBottom: 15,
-    backgroundColor: "#111827",
+    backgroundColor: "#F9FAFB",
   },
   cardRow: {
     flexDirection: "row",
@@ -150,12 +147,12 @@ const styles = StyleSheet.create({
     fontSize: 8,
   },
   infoLabel: {
-    color: "#9CA3AF",
+    color: "#6B7280",
     width: "35%",
     fontFamily: "Helvetica-Bold",
   },
   infoValue: {
-    color: "#FFFFFF",
+    color: "#111827",
     width: "65%",
   },
   semesterSection: {
@@ -164,26 +161,26 @@ const styles = StyleSheet.create({
   semesterName: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
-    color: "#22C55E",
+    color: "#90274F",
     marginBottom: 5,
   },
   table: {
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#E5E7EB",
     borderRadius: 4,
     overflow: "hidden",
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#1F2937",
+    backgroundColor: "#F5DBE5",
     borderBottomWidth: 1,
-    borderBottomColor: "#D1D5DB",
+    borderBottomColor: "#E5E7EB",
     paddingVertical: 3,
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#D1D5DB",
+    borderBottomColor: "#E5E7EB",
     paddingVertical: 3,
   },
   colCode: { width: "12%", fontSize: 7, paddingLeft: 4 },
@@ -195,15 +192,15 @@ const styles = StyleSheet.create({
   colMidterm: { width: "8%", fontSize: 7, textAlign: "center" },
   colFinal: { width: "8%", fontSize: 7, textAlign: "center" },
   colTotal: { width: "8%", fontSize: 7, textAlign: "center" },
-  colGrade: { width: "6%", fontSize: 7, textAlign: "center", fontFamily: "Helvetica-Bold", color: "#22C55E" },
+  colGrade: { width: "6%", fontSize: 7, textAlign: "center", fontFamily: "Helvetica-Bold", color: "#90274F" },
   colGpa: { width: "6%", fontSize: 7, textAlign: "center" },
   tableHeaderCell: {
     fontFamily: "Helvetica-Bold",
-    color: "#9CA3AF",
+    color: "#701F3D",
   },
   semesterFooterLine: {
     borderTopWidth: 1,
-    borderTopColor: "#D1D5DB",
+    borderTopColor: "#E5E7EB",
     borderStyle: "dashed",
     marginVertical: 4,
   },
@@ -215,25 +212,25 @@ const styles = StyleSheet.create({
   },
   semesterSummaryLabel: {
     fontSize: 8,
-    color: "#9CA3AF",
+    color: "#6B7280",
     marginLeft: 15,
   },
   semesterSummaryValue: {
     fontFamily: "Helvetica-Bold",
-    color: "#22C55E",
+    color: "#90274F",
   },
   overallSummaryCard: {
     borderWidth: 1,
-    borderColor: "#22C55E",
+    borderColor: "#B03060",
     borderRadius: 6,
     padding: 10,
-    backgroundColor: "#111827",
+    backgroundColor: "#FBEFF3",
     marginBottom: 15,
   },
   overallSummaryTitle: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
-    color: "#22C55E",
+    color: "#90274F",
     marginBottom: 6,
     textAlign: "center",
     letterSpacing: 1,
@@ -249,17 +246,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 4,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#D1D5DB",
+    borderBottomColor: "#E5E7EB",
     paddingBottom: 2,
   },
   overallSummaryLabel: {
     fontSize: 8,
-    color: "#9CA3AF",
+    color: "#6B7280",
   },
   overallSummaryValue: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: "#FFFFFF",
+    color: "#111827",
   },
   bottomFlexContainer: {
     flexDirection: "row",
@@ -269,15 +266,15 @@ const styles = StyleSheet.create({
   gradingScaleBox: {
     width: "55%",
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#E5E7EB",
     borderRadius: 6,
     padding: 8,
-    backgroundColor: "#111827",
+    backgroundColor: "#F9FAFB",
   },
   gradingScaleTitle: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: "#22C55E",
+    color: "#90274F",
     marginBottom: 4,
     textAlign: "center",
   },
@@ -289,7 +286,7 @@ const styles = StyleSheet.create({
   gradingScaleItem: {
     width: "24%",
     fontSize: 7.5,
-    color: "#FFFFFF",
+    color: "#111827",
     marginBottom: 2,
     textAlign: "center",
   },
@@ -303,14 +300,14 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#B03060",
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
   },
   sealText: {
     fontSize: 6,
-    color: "#9CA3AF",
+    color: "#701F3D",
     fontFamily: "Helvetica-Bold",
     textAlign: "center",
   },
@@ -326,7 +323,7 @@ const styles = StyleSheet.create({
   },
   signatureHeader: {
     fontSize: 8,
-    color: "#9CA3AF",
+    color: "#6B7280",
     fontFamily: "Helvetica-Bold",
   },
   signatureSpace: {
@@ -335,25 +332,25 @@ const styles = StyleSheet.create({
   signatureLine: {
     width: "100%",
     borderBottomWidth: 1,
-    borderBottomColor: "#D1D5DB",
+    borderBottomColor: "#E5E7EB",
   },
   signatureRole: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: "#FFFFFF",
+    color: "#111827",
     marginTop: 3,
     textAlign: "center",
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: "#D1D5DB",
+    borderTopColor: "#E5E7EB",
     paddingTop: 6,
     alignItems: "center",
     marginTop: "auto",
   },
   footerText: {
     fontSize: 7,
-    color: "#9CA3AF",
+    color: "#6B7280",
     textAlign: "center",
     marginBottom: 2,
   },
@@ -365,11 +362,11 @@ const styles = StyleSheet.create({
   },
   footerDate: {
     fontSize: 7,
-    color: "#9CA3AF",
+    color: "#6B7280",
   },
   footerPage: {
     fontSize: 7,
-    color: "#9CA3AF",
+    color: "#6B7280",
   },
 });
 
@@ -386,14 +383,7 @@ export default function TranscriptTemplate({
   const rollNumber = student?.roll_no || "";
   const faculty = student?.faculty || "";
   const department = student?.department || "";
-  const programme = student?.programme || "N/A";
-  const batch = student?.batch || "N/A";
   const academicYear = student?.academic_year || "";
-  const admissionDate = student?.admission_date || "N/A";
-  const currentStatus = student?.current_status || "N/A";
-  const transcriptDate =
-    student?.transcript_date ??
-    new Date().toISOString().split("T")[0];
 
   const semesterList = semesters || [];
   const totalSemesters = summary?.total_semesters || 0;
@@ -412,7 +402,7 @@ export default function TranscriptTemplate({
             <Image src={logo} style={styles.logo} />
           </View>
           <View style={styles.titleContainer}>
-            <Text style={styles.uniName}>ABAARSO UNIVERSITY</Text>
+            <Text style={styles.uniName}>ABAARSO TECH UNIVERSITY</Text>
             <Text style={styles.docTitle}>OFFICIAL ACADEMIC TRANSCRIPT</Text>
             <Text style={styles.facultyName}>
               {faculty || "Faculty of Engineering"}
@@ -448,31 +438,11 @@ export default function TranscriptTemplate({
                 <Text style={styles.infoLabel}>Department:</Text>
                 <Text style={styles.infoValue}>{department}</Text>
               </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Programme:</Text>
-                <Text style={styles.infoValue}>{programme}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Batch:</Text>
-                <Text style={styles.infoValue}>{batch}</Text>
-              </View>
             </View>
             <View style={styles.cardColumn}>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Academic Year:</Text>
                 <Text style={styles.infoValue}>{academicYear}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Admission Date:</Text>
-                <Text style={styles.infoValue}>{admissionDate}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Current Status:</Text>
-                <Text style={styles.infoValue}>{currentStatus}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Transcript Date:</Text>
-                <Text style={styles.infoValue}>{transcriptDate}</Text>
               </View>
             </View>
           </View>
@@ -603,13 +573,13 @@ export default function TranscriptTemplate({
           <View style={styles.gradingScaleBox}>
             <Text style={styles.gradingScaleTitle}>GRADING SCALE</Text>
             <View style={styles.gradingScaleGrid}>
-              <Text style={styles.gradingScaleItem}>A+ = 4.00</Text>
-              <Text style={styles.gradingScaleItem}>A = 3.75</Text>
-              <Text style={styles.gradingScaleItem}>B+ = 3.50</Text>
-              <Text style={styles.gradingScaleItem}>B = 3.00</Text>
-              <Text style={styles.gradingScaleItem}>C = 2.50</Text>
-              <Text style={styles.gradingScaleItem}>D = 2.00</Text>
-              <Text style={styles.gradingScaleItem}>F = 0.00</Text>
+              <Text style={styles.gradingScaleItem}>A  = 4.00 (≥90)</Text>
+              <Text style={styles.gradingScaleItem}>A- = 3.70 (≥80)</Text>
+              <Text style={styles.gradingScaleItem}>B+ = 3.50 (≥70)</Text>
+              <Text style={styles.gradingScaleItem}>B  = 3.00 (≥60)</Text>
+              <Text style={styles.gradingScaleItem}>C  = 2.00 (≥50)</Text>
+              <Text style={styles.gradingScaleItem}>D  = 1.00 (≥40)</Text>
+              <Text style={styles.gradingScaleItem}>F  = 0.00 (&lt;40)</Text>
             </View>
           </View>
 
@@ -649,14 +619,14 @@ export default function TranscriptTemplate({
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
-            This transcript is generated electronically by the Abaarso University Result Management System.
+            This transcript is generated electronically by the Abaarso Tech University Result Management System.
           </Text>
           <Text style={styles.footerText}>
             This document becomes officially valid only after the university seal and authorized signatures have been applied.
           </Text>
           <View style={styles.footerBottom}>
             <Text style={styles.footerDate}>
-              Generation Date: {transcriptDate}
+              Generation Date: {new Date().toISOString().split("T")[0]}
             </Text>
             <Text style={styles.footerPage} render={({ pageNumber, totalPages }) => (
               `Page ${pageNumber} of ${totalPages}`

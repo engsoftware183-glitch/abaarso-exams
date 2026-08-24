@@ -4,17 +4,17 @@ import fs from "fs";
 import path from "path";
 import QRCode from "qrcode";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import TranscriptTemplate from "@/pdf/transcript.template";
-import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // =========================================
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(request);
+    const auth = await requireStudentScope(request);
 
     if (!auth.ok) {
       return auth.response;
@@ -35,6 +35,18 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { error: "Invalid student ID" },
         { status: 400 }
+      );
+    }
+
+    // A STUDENT may only ever download their own transcript. The
+    // student_id query param is client-supplied, so it is never
+    // trusted - it must match the student_id resolved from the
+    // verified JWT. "Not found" avoids revealing whether another
+    // student's transcript exists.
+    if (auth.student && auth.student.student_id !== studentId) {
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
       );
     }
 
@@ -271,14 +283,9 @@ export async function GET(request: Request) {
       full_name: student.full_name,
       roll_no: student.roll_no,
       email: student.email,
-      faculty: student.faculty?.faculty_name || "Faculty of Engineering",
+      faculty: student.faculty?.faculty_name || "",
       department: student.department?.department_name || "",
       academic_year: student.academic?.year || "",
-      programme: (student as { programme?: string | null }).programme ?? "N/A",
-      batch: (student as { batch?: string | null }).batch ?? "N/A",
-      admission_date: (student as { admission_date?: string | null }).admission_date ?? "N/A",
-      current_status: (student as { current_status?: string | null }).current_status ?? "ACTIVE",
-      transcript_date: (student as { transcript_date?: string | null }).transcript_date ?? new Date().toISOString().split("T")[0],
     };
 
     const summaryResponse = {
@@ -291,7 +298,7 @@ export async function GET(request: Request) {
     };
 
     // 5. Load University Logo from public folder as Base64 Data URL
-    const logoPath = path.join(process.cwd(), "public", "image.png");
+    const logoPath = path.join(process.cwd(), "public", "images", "atu-logo.png");
     let logoBase64 = "";
     try {
       if (fs.existsSync(logoPath)) {

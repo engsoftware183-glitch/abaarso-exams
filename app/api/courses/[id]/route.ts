@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 
@@ -23,7 +24,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -32,18 +33,28 @@ export async function GET(
     const params =
       await context.params;
 
+    // A STUDENT may only view a course in their own department, and
+    // within it only ever their own results (never other students'
+    // grades). Scope is applied in the query itself so requests for
+    // courses outside the department return the same 404 as missing ids.
     const course =
-      await prisma.course.findUnique({
+      await prisma.course.findFirst({
 
         where: {
           course_id:
             Number(params.id),
+
+          ...(auth.student
+            ? { department_id: auth.student.department_id }
+            : {}),
         },
 
         include: {
           department: true,
           semester: true,
-          results: true,
+          results: auth.student
+            ? { where: { student_id: auth.student.student_id } }
+            : true,
         },
 
       });

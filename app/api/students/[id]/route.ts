@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 
@@ -24,7 +25,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -32,6 +33,23 @@ export async function GET(
 
     const params =
       await context.params;
+
+    // =========================================
+    // STUDENT OWNERSHIP CHECK
+    // =========================================
+
+    // The path id is client-supplied, so it is never trusted - a STUDENT
+    // must always resolve to their own record. Returning 404 (not 403)
+    // avoids revealing whether another student's record exists.
+    if (auth.student && auth.student.student_id !== Number(params.id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Student not found",
+        },
+        { status: 404 }
+      );
+    }
 
     // =========================================
     // GET STUDENT
@@ -338,16 +356,41 @@ export async function DELETE(
       await context.params;
 
     // =========================================
-    // DELETE STUDENT
+    // DELETE STUDENT + LINKED ACCOUNT
     // =========================================
 
-    await prisma.student.delete({
+    // The schema only cascades Student when the User is deleted, never
+    // the other way around - deleting just the Student row would leave
+    // an orphan STUDENT login account behind. So the User is deleted
+    // instead (the cascade removes the Student profile and any of its
+    // cascaded records), after confirming the profile actually exists.
+    const student =
+      await prisma.student.findUnique({
+        where: {
+          student_id:
+            Number(params.id),
+        },
+        select: {
+          user_id: true,
+        },
+      });
 
+    if (!student) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Student not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    await prisma.user.delete({
       where: {
-        student_id:
-          Number(params.id),
+        user_id: student.user_id,
       },
-
     });
 
     return NextResponse.json(

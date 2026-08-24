@@ -22,4 +22,5 @@ export type LoginResponse = ApiEnvelope<{
 export type ApiErrorPayload = {
   success?: boolean;
   message?: string;
+  recoveryAvailable?: boolean;
 };

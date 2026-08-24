@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 import { ResultStatus } from "@prisma/client";
@@ -19,7 +19,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -39,10 +39,19 @@ export async function GET(
     // SEARCH RESULTS
     // =========================================
 
+    // SECURITY: students must only ever see PUBLISHED results.
+    // The status filter is enforced unconditionally at the DB level.
+    // Students also cannot search by status keyword to discover drafts.
+    const studentStatusFilter = auth.student ? ResultStatus.PUBLISHED : undefined;
+
     const results =
       await prisma.result.findMany({
 
         where: {
+          ...(auth.student
+            ? { student_id: auth.student.student_id, status: studentStatusFilter }
+            : {}),
+
           OR: [
 
             {
@@ -95,14 +104,20 @@ export async function GET(
               },
             },
 
-            {
-              status:
-                query.toUpperCase() === "DRAFT"
-                  ? ResultStatus.DRAFT
-                  : query.toUpperCase() === "PUBLISHED"
-                  ? ResultStatus.PUBLISHED
-                  : undefined,
-            },
+            // For admins only: allow status keyword search (DRAFT / PUBLISHED).
+            // Students already have status locked to PUBLISHED above.
+            ...(!auth.student
+              ? [
+                  {
+                    status:
+                      query.toUpperCase() === "DRAFT"
+                        ? ResultStatus.DRAFT
+                        : query.toUpperCase() === "PUBLISHED"
+                        ? ResultStatus.PUBLISHED
+                        : undefined,
+                  },
+                ]
+              : []),
 
           ],
         },

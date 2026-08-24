@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { requireStudentScope, examScopeWhere } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 
 // ======================================================
@@ -20,7 +21,7 @@ export async function GET(
     // AUTHORIZATION
     // =========================================
 
-    const auth = requireAuth(req);
+    const auth = await requireStudentScope(req);
 
     if (!auth.ok) {
       return auth.response;
@@ -29,11 +30,16 @@ export async function GET(
     const params =
       await context.params;
 
+    // Ownership check happens in the query itself so a STUDENT
+    // requesting an exam outside their own scope gets the same 404
+    // as a nonexistent id - it never reveals whether the exam exists.
     const exam =
-      await prisma.exam.findUnique({
+      await prisma.exam.findFirst({
         where: {
           exam_id:
             Number(params.id),
+
+          ...(examScopeWhere(auth.student) ?? {}),
         },
 
         include: {

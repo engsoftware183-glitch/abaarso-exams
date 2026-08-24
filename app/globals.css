@@ -1,15 +1,55 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f5f7f9;
   --foreground: #111827;
-  --atu-green: #16a34a;
-  --atu-green-dark: #15803d;
-  --atu-green-soft: #dcfce7;
-  --atu-sidebar: #07110d;
-  --atu-sidebar-2: #0f1a15;
+
+  /* Primary brand (extracted from the ATU seal, public/image.png) */
+  --atu-maroon-50: #fbeff3;
+  --atu-maroon-100: #f5dbe5;
+  --atu-maroon-200: #ebb7cb;
+  --atu-maroon-300: #de87a8;
+  --atu-maroon-400: #d05382;
+  --atu-maroon-500: #b03060;
+  --atu-maroon-600: #90274f;
+  --atu-maroon-700: #701f3d;
+  --atu-maroon-800: #50162c;
+  --atu-maroon-900: #340e1c;
+  --atu-maroon-950: #200911;
+
+  --atu-primary: var(--atu-maroon-500);
+  --atu-primary-dark: var(--atu-maroon-600);
+  --atu-primary-soft: var(--atu-maroon-100);
+
+  --atu-sidebar: var(--atu-maroon-950);
+  --atu-sidebar-2: var(--atu-maroon-900);
+
+  /* Semantic status colors (deliberately distinct from the brand maroon) */
+  --atu-success: #3b6d54;
+  --atu-success-dark: #2d5842;
+  --atu-success-soft: #ddeee6;
+  --atu-warning: #b45309;
+  --atu-warning-soft: #fffbeb;
+  --atu-error: #dc2626;
+  --atu-error-dark: #991b1b;
+  --atu-error-soft: #fef2f2;
+
   --atu-border: #e5e7eb;
   --atu-muted: #6b7280;
+}
+
+.dark {
+  --background: #0b0f17;
+  --foreground: #f8fafc;
+
+  --atu-primary: #c53668;
+  --atu-primary-dark: #94143f;
+  --atu-primary-soft: #2a1420;
+
+  --atu-border: #334155;
+  --atu-muted: #94a3b8;
 }
 
 @theme inline {
@@ -30,15 +70,59 @@ a,
 input,
 select,
 textarea {
-  outline-color: var(--atu-green);
+  outline-color: var(--atu-primary);
 }
 
 ::selection {
-  background: var(--atu-green-soft);
+  background: var(--atu-primary-soft);
   color: var(--foreground);
 }
 
 .atu-scrollbar {
   scrollbar-color: #cbd5e1 transparent;
   scrollbar-width: thin;
+}
+
+/* ======================================================
+   LOGIN PAGE - LEFT PANEL EXAMINATION PHOTOGRAPH
+   ====================================================== */
+
+.loginVisual {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: #3b0a1e;
+}
+
+.loginVisualImage {
+  z-index: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+.loginVisualOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(97, 20, 51, 0.6) 0%,
+    rgba(67, 8, 34, 0.78) 55%,
+    rgba(35, 3, 18, 0.92) 100%
+  );
+}
+
+.dark .loginVisualOverlay {
+  background: linear-gradient(
+    180deg,
+    rgba(44, 4, 22, 0.7) 0%,
+    rgba(28, 2, 15, 0.84) 55%,
+    rgba(7, 2, 8, 0.96) 100%
+  );
+}
+
+.loginVisualContent {
+  position: relative;
+  z-index: 2;
 }
