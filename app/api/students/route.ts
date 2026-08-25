@@ -7,6 +7,7 @@ import type { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
 import { logActivity } from "@/lib/activity-log";
 
 
@@ -156,6 +157,18 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           message: "Username and password are required to create a student account",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!user_id && !isPasswordValid(password)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: PASSWORD_POLICY_MESSAGE,
         },
         {
           status: 400,

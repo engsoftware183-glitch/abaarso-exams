@@ -38,11 +38,6 @@ function getTransport() {
 }
 
 export async function sendPasswordResetEmail(to: string, code: string) {
-  // Development-only visibility: never printed/logged in production.
-  if (process.env.NODE_ENV !== "production") {
-    console.log(`[DEV ONLY] Password reset code for ${to}: ${code}`);
-  }
-
   const transport = getTransport();
 
   if (!transport) {

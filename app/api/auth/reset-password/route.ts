@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyResetToken } from "@/lib/reset-token";
 import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 const FAILURE_RESPONSE = { message: "Unable to reset password. Please request a new code." };
 const ELIGIBLE_ROLES = ["ADMIN", "SUPER_ADMIN", "STUDENT"];
@@ -53,9 +54,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(FAILURE_RESPONSE, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { user_id: payload.user_id } });
+    const user = await prisma.user.findUnique({
+      where: { user_id: payload.user_id },
+      include: { student: true, admin: true },
+    });
 
     if (!user || !ELIGIBLE_ROLES.includes(user.role)) {
+      return NextResponse.json(FAILURE_RESPONSE, { status: 400 });
+    }
+
+    if (
+      (user.role === "STUDENT" && !user.student) ||
+      (user.role === "ADMIN" && !user.admin)
+    ) {
       return NextResponse.json(FAILURE_RESPONSE, { status: 400 });
     }
 
@@ -101,7 +112,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.log("RESET_PASSWORD_ERROR", error);
+    logError("RESET_PASSWORD_ERROR", error);
     return NextResponse.json(FAILURE_RESPONSE, { status: 500 });
   }
 }

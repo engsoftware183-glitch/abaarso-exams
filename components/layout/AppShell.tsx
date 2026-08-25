@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -20,7 +20,7 @@ import { navGroups } from "@/components/layout/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
-import { getAuthToken, getStoredUser, logout } from "@/lib/auth-client";
+import { clearUser, fetchCurrentUser, getStoredUser } from "@/lib/auth-client";
 import { apiClient } from "@/lib/api-client";
 import type { AuthUser, UserRole, Notification } from "@/types/api";
 
@@ -49,25 +49,26 @@ function ShellContent({ children, title, description }: AppShellProps) {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Route protection: every authenticated page renders through this
-  // shell. The JWT lives in localStorage (it is never sent to the server
-  // on plain page navigation), so it cannot be validated by middleware -
-  // the client-side check below is the guard compatible with the existing
-  // JWT architecture. Unauthenticated visitors are redirected to /login
-  // and the shell is never rendered, so no page can impersonate
-  // SUPER_ADMIN without a valid session.
   useEffect(() => {
-    const token = getAuthToken();
-    const storedUser = getStoredUser();
+    async function checkSession() {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        setUser(storedUser);
+        setAuthChecked(true);
+        return;
+      }
 
-    if (!token || !storedUser) {
-      router.replace("/login");
-      return;
+      const remoteUser = await fetchCurrentUser();
+      if (remoteUser) {
+        setUser(remoteUser);
+      } else {
+        router.replace("/login");
+        return;
+      }
+      setAuthChecked(true);
     }
 
-    setUser(storedUser);
-    setCollapsed(localStorage.getItem("atu_sidebar_collapsed") === "true");
-    setAuthChecked(true);
+    void checkSession();
   }, [router]);
 
   useEffect(() => {
@@ -99,9 +100,6 @@ function ShellContent({ children, title, description }: AppShellProps) {
     };
   }, []);
 
-  // authChecked is only true once a valid session was found, so the
-  // fallback below is unreachable at runtime - the role-dependent shell
-  // is never rendered without a logged-in user.
   const role = user?.role ?? "SUPER_ADMIN";
   const visibleGroups = useMemo(
     () =>
@@ -112,14 +110,12 @@ function ShellContent({ children, title, description }: AppShellProps) {
   );
   const breadcrumb = pathname.split("/").filter(Boolean).map((part) => part.replaceAll("-", " "));
 
-  // Render nothing until the session check above has resolved, so the
-  // role-dependent shell never flashes for unauthenticated visitors.
   if (!authChecked) {
     return null;
   }
 
   async function handleLogout() {
-    await logout();
+    await clearUser();
     showToast("You have been logged out.");
     router.push("/login");
   }
@@ -131,7 +127,7 @@ function ShellContent({ children, title, description }: AppShellProps) {
     >
       <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
         <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white">
-          <Image src="/images/atu-logo.png" alt="ABAARSO TECH UNIVERSITY logo" fill className="object-contain p-1" priority />
+          <Image src="/images/atu-logo.jpg" alt="ABAARSO TECH UNIVERSITY logo" fill className="object-contain p-1" priority />
         </div>
         {!collapsed ? (
           <div className="min-w-0">
@@ -313,7 +309,7 @@ function ShellContent({ children, title, description }: AppShellProps) {
                 <div className="absolute right-0 mt-2 w-72 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-xl">
                   <div className="flex gap-3 border-b border-[#E5E7EB] pb-3">
                     <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-white">
-                      <Image src="/images/atu-logo.png" alt="ATU profile logo" fill className="object-contain" />
+                      <Image src="/images/atu-logo.jpg" alt="ATU profile logo" fill className="object-contain" />
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold">{user?.username ?? "ATU User"}</p>
@@ -367,3 +363,4 @@ export function AppShell(props: AppShellProps) {
     </ToastProvider>
   );
 }
+

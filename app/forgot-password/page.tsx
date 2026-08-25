@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-[420px]">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="relative h-14 w-14">
-            <Image src="/images/atu-logo.png" alt="Abaarso Tech University official seal" fill className="object-contain" priority />
+            <Image src="/images/atu-logo.jpg" alt="Abaarso Tech University official seal" fill className="object-contain" priority />
           </div>
           <p className="mt-2 text-xs font-black uppercase tracking-wide text-[#90274F] dark:text-[#F7D9E4]">Abaarso Tech University</p>
         </div>
@@ -84,3 +84,4 @@ export default function ForgotPasswordPage() {
     </main>
   );
 }
+

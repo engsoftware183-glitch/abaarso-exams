@@ -559,16 +559,10 @@ export function CrudModule({ config }: { config: CrudConfig }) {
       if (value) params.set(filter.name, value);
     });
 
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("atu_token") : null;
-
     const response = await fetch(
       `${config.exportPath}?${params.toString()}`,
       {
         method: "GET",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
       }
     );
 

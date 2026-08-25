@@ -3,6 +3,9 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { prismaErrorResponse } from "@/lib/errors";
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 
 // ======================================================
@@ -13,6 +16,20 @@ export async function POST(
   req: NextRequest
 ) {
   try {
+
+    const ip = getClientIp(req);
+    const ipLimit = checkRateLimit(`register:ip:${ip}`, 5, 60 * 60 * 1000);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Too many registration attempts. Please try again later.",
+        },
+        {
+          status: 429,
+        }
+      );
+    }
 
     // =========================================
     // GET REQUEST BODY
@@ -40,6 +57,18 @@ export async function POST(
           success: false,
           message:
             "All fields are required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!isPasswordValid(password)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: PASSWORD_POLICY_MESSAGE,
         },
         {
           status: 400,
@@ -158,10 +187,7 @@ if (existingUser) {
 
   } catch (error) {
 
-    console.log(
-      "REGISTER_ERROR",
-      error
-    );
+    logError("REGISTER_ERROR", error);
 
     return prismaErrorResponse(error, "Internal Server Error");
   }

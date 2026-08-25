@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { compareResetCode, RESET_CODE_MAX_ATTEMPTS } from "@/lib/reset-code";
 import { signResetToken } from "@/lib/reset-token";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 const INVALID_RESPONSE = { message: "Invalid or expired verification code." };
 const ELIGIBLE_ROLES = ["ADMIN", "SUPER_ADMIN", "STUDENT"];
@@ -34,9 +35,19 @@ export async function POST(req: NextRequest) {
     // LOOKUP ELIGIBLE USER + ACTIVE CODE
     // =========================================
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { student: true, admin: true },
+    });
 
     if (!user || !ELIGIBLE_ROLES.includes(user.role)) {
+      return NextResponse.json(INVALID_RESPONSE, { status: 400 });
+    }
+
+    if (
+      (user.role === "STUDENT" && !user.student) ||
+      (user.role === "ADMIN" && !user.admin)
+    ) {
       return NextResponse.json(INVALID_RESPONSE, { status: 400 });
     }
 
@@ -76,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ verified: true, resetToken }, { status: 200 });
   } catch (error) {
-    console.log("VERIFY_RESET_CODE_ERROR", error);
+    logError("VERIFY_RESET_CODE_ERROR", error);
     return NextResponse.json(INVALID_RESPONSE, { status: 400 });
   }
 }

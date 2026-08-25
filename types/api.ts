@@ -15,7 +15,6 @@ export type AuthUser = {
 };
 
 export type LoginResponse = ApiEnvelope<{
-  token: string;
   user: AuthUser;
 }>;
 

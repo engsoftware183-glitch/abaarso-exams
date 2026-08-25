@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth";
+import { AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS } from "@/lib/cookies";
+import { logError } from "@/lib/logger";
 
-
-// ======================================================
-// LOGOUT USER
-// ======================================================
 
 export async function POST(
   req: NextRequest
 ) {
   try {
-
-    // =========================================
-    // AUTHORIZATION
-    // =========================================
 
     const auth = requireAuth(req);
 
@@ -22,11 +16,7 @@ export async function POST(
       return auth.response;
     }
 
-    // =========================================
-    // SUCCESS RESPONSE
-    // =========================================
-
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
 
@@ -38,12 +28,17 @@ export async function POST(
       }
     );
 
+    response.cookies.set(AUTH_COOKIE_NAME, "", {
+      ...AUTH_COOKIE_OPTIONS,
+      maxAge: 0,
+      expires: new Date(0),
+    });
+
+    return response;
+
   } catch (error) {
 
-    console.log(
-      "LOGOUT_ERROR",
-      error
-    );
+    logError("LOGOUT_ERROR", error);
 
     return NextResponse.json(
       {

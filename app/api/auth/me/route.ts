@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logError } from "@/lib/logger";
 
 
 // ======================================================
@@ -84,10 +85,7 @@ export async function GET(
 
   } catch (error) {
 
-    console.log(
-      "ME_ERROR",
-      error
-    );
+    logError("ME_ERROR", error);
 
     return prismaErrorResponse(error, "Failed to fetch current user");
   }

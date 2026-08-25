@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
 import { logActivity } from "@/lib/activity-log";
+import { logError } from "@/lib/logger";
 
 
 // ======================================================
@@ -139,10 +140,7 @@ export async function POST(
 
   } catch (error) {
 
-    console.log(
-      "BULK_REGISTER_ERROR",
-      error
-    );
+    logError("BULK_REGISTER_ERROR", error);
 
     return prismaErrorResponse(error, "Failed to register users");
   }

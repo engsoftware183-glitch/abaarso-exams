@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
 import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
@@ -136,6 +137,18 @@ export async function POST(req: NextRequest) {
           success: false,
           message:
             "All fields are required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!isPasswordValid(password)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: PASSWORD_POLICY_MESSAGE,
         },
         {
           status: 400,

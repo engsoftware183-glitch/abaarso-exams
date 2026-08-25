@@ -1,18 +1,13 @@
 "use client";
 
 import { apiClient } from "@/lib/api-client";
-import type { AuthUser, LoginResponse } from "@/types/api";
+import type { AuthUser } from "@/types/api";
 
-const TOKEN_KEY = "atu_token";
 const USER_KEY = "atu_user";
 
-export function saveSession(token: string, user: AuthUser) {
-  localStorage.setItem(TOKEN_KEY, token);
+export function saveUser(user: AuthUser) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-export function getAuthToken() {
-  return typeof window === "undefined" ? null : localStorage.getItem(TOKEN_KEY);
 }
 
 export function getStoredUser(): AuthUser | null {
@@ -28,19 +23,34 @@ export function getStoredUser(): AuthUser | null {
   }
 }
 
+export function clearUser() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(USER_KEY);
+}
+
 export async function login(email: string, password: string) {
-  const response = await apiClient.post<LoginResponse>("/api/auth/login", { email, password });
-  saveSession(response.token, response.user);
+  const response = await apiClient.post<{ success: boolean; user: AuthUser }>("/api/auth/login", { email, password });
+  saveUser(response.user);
   return response;
 }
 
 export async function logout() {
-  const token = getAuthToken();
-
-  if (token) {
-    await apiClient.post("/api/auth/logout", undefined, { token }).catch(() => undefined);
+  try {
+    await apiClient.post("/api/auth/logout");
+  } catch {
+    // ignore logout errors
   }
 
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  clearUser();
+}
+
+export async function fetchCurrentUser(): Promise<AuthUser | null> {
+  try {
+    const response = await apiClient.get<{ success: boolean; user: AuthUser }>("/api/auth/me");
+    saveUser(response.user);
+    return response.user;
+  } catch {
+    clearUser();
+    return null;
+  }
 }

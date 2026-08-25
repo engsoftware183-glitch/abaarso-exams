@@ -3,30 +3,35 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import { prisma } from "@/lib/prisma";
+import { AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS } from "@/lib/cookies";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+const LOCKOUT_MS = 15 * 60 * 1000;
 
-// Real bcrypt hash of a fixed placeholder string. When the email does
-// not exist we still run a bcrypt compare against it so the response
-// time is indistinguishable from a real password check (no timing-based
-// account enumeration).
 const DUMMY_PASSWORD_HASH =
   "$2b$10$56T8.BvKoY3OVe4PNqiQvOfdwlHGyMnyGB0qI8DfhLo7hExPoZ/AK";
 
-
-// ======================================================
-// LOGIN USER
-// ======================================================
 
 export async function POST(
   req: NextRequest
 ) {
   try {
 
-    // =========================================
-    // GET REQUEST BODY
-    // =========================================
+    const ip = getClientIp(req);
+    const ipLimit = checkRateLimit(`login:ip:${ip}`, 10, 15 * 60 * 1000);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Too many attempts. Please try again later.",
+        },
+        {
+          status: 429,
+        }
+      );
+    }
 
     const body = await req.json();
 
@@ -34,10 +39,6 @@ export async function POST(
       email,
       password,
     } = body;
-
-    // =========================================
-    // VALIDATION
-    // =========================================
 
     if (
       !email ||
@@ -56,10 +57,6 @@ export async function POST(
       );
     }
 
-    // =========================================
-    // FIND USER
-    // =========================================
-
     const user =
       await prisma.user.findUnique({
         where: {
@@ -67,15 +64,7 @@ export async function POST(
         },
       });
 
-    // =========================================
-    // USER NOT FOUND
-    // =========================================
-
     if (!user) {
-      // Generic authentication failure - identical message/status to a
-      // wrong password, plus a dummy bcrypt compare to equalize timing.
-      // Never reveals whether the account exists. Nothing to lock or
-      // count here: failed-attempt tracking lives on the User row only.
       await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
 
       return NextResponse.json(
@@ -91,10 +80,6 @@ export async function POST(
       );
     }
 
-    // =========================================
-    // ACCOUNT LOCKOUT CHECK
-    // =========================================
-
     if (user.locked_until && user.locked_until.getTime() > Date.now()) {
       return NextResponse.json(
         {
@@ -107,23 +92,13 @@ export async function POST(
       );
     }
 
-    // =========================================
-    // COMPARE PASSWORD
-    // =========================================
-
     const passwordMatch =
       await bcrypt.compare(
         password,
         user.password
       );
 
-    // =========================================
-    // INVALID PASSWORD
-    // =========================================
-
     if (!passwordMatch) {
-      // Expired lock (locked_until in the past) is implicitly cleared
-      // below via the plain increment - no separate branch needed.
       const nextAttempts = (user.locked_until ? 0 : user.failed_login_attempts) + 1;
       const shouldLock = nextAttempts >= MAX_FAILED_ATTEMPTS;
 
@@ -147,10 +122,6 @@ export async function POST(
         );
       }
 
-      // Note: the previous recoveryAvailable hint is deliberately not
-      // sent - it was only returned for accounts that exist, which would
-      // have acted as an account-enumeration oracle. The generic
-      // response is now identical for unknown email and wrong password.
       return NextResponse.json(
         {
           success: false,
@@ -162,20 +133,12 @@ export async function POST(
       );
     }
 
-    // =========================================
-    // SUCCESSFUL PASSWORD MATCH - CLEAR COUNTERS
-    // =========================================
-
     if (user.failed_login_attempts > 0 || user.locked_until) {
       await prisma.user.update({
         where: { user_id: user.user_id },
         data: { failed_login_attempts: 0, locked_until: null },
       });
     }
-
-    // =========================================
-    // JWT SECRET CHECK
-    // =========================================
 
     if (!process.env.JWT_SECRET) {
       return NextResponse.json(
@@ -190,10 +153,6 @@ export async function POST(
         }
       );
     }
-
-    // =========================================
-    // GENERATE TOKEN
-    // =========================================
 
     const token = jwt.sign(
       {
@@ -215,18 +174,12 @@ export async function POST(
       }
     );
 
-    // =========================================
-    // SUCCESS RESPONSE
-    // =========================================
-
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
 
         message:
           "Login successful",
-
-        token,
 
         user: {
           user_id:
@@ -250,12 +203,13 @@ export async function POST(
       }
     );
 
+    response.cookies.set(AUTH_COOKIE_NAME, token, AUTH_COOKIE_OPTIONS);
+
+    return response;
+
   } catch (error) {
 
-    console.log(
-      "LOGIN_ERROR",
-      error
-    );
+    logError("LOGIN_ERROR", error);
 
     return NextResponse.json(
       {
@@ -263,7 +217,7 @@ export async function POST(
 
         message:
           "Internal Server Error",
-      },
+        },
       {
         status: 500,
       }

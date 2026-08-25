@@ -1,4 +1,4 @@
-// ======================================================
+﻿// ======================================================
 // EXPORT UTILITIES (server-side)
 // ======================================================
 //
@@ -135,7 +135,7 @@ export const EXPORT_MAX_ROWS = 5000;
 // PDF HELPERS
 // ======================================================
 
-const ATU_LOGO_PATH = path.join(process.cwd(), "public", "images", "atu-logo.png");
+const ATU_LOGO_PATH = path.join(process.cwd(), "public", "images", "atu-logo.jpg");
 
 let cachedLogo: string | null = null;
 
@@ -160,3 +160,4 @@ export function loadAtuLogo(): string {
 
   return cachedLogo;
 }
+

@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -69,7 +69,7 @@ export default function HomePage() {
                 <div className="mb-4 flex w-full flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start">
                   <div className="relative h-[112px] w-[112px] shrink-0 sm:h-[125px] sm:w-[125px]">
                     <Image
-                      src="/images/atu-logo.png"
+                      src="/images/atu-logo.jpg"
                       alt="Abaarso Tech University logo"
                       fill
                       priority
@@ -80,7 +80,7 @@ export default function HomePage() {
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#efd3de] bg-[#fff4f7] px-4 py-2 text-xs font-bold text-[#a51f50] shadow-sm sm:text-sm">
                     <ShieldCheck className="h-4 w-4" />
-                    <span>Smart • Secure • Seamless</span>
+                    <span>Smart â€¢ Secure â€¢ Seamless</span>
                   </div>
                 </div>
 
@@ -232,7 +232,7 @@ export default function HomePage() {
               <GraduationCap className="h-4 w-4" />
             </div>
             <p className="text-xs text-slate-500">
-              © 2026 Abaarso Tech University. All rights reserved.
+              Â© 2026 Abaarso Tech University. All rights reserved.
             </p>
           </div>
 

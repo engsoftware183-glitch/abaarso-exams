@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
+import { AUTH_COOKIE_NAME } from "@/lib/cookies";
 
 export interface JwtPayload {
   id: string;
@@ -22,13 +23,27 @@ export function verifyToken(token: string) {
   }
 }
 
+export function getTokenFromRequest(req: Request): string | null {
+  const cookieHeader = req.headers.get("cookie");
+  if (!cookieHeader) return null;
+
+  const cookies = cookieHeader.split(";").map((c) => c.trim());
+  for (const cookie of cookies) {
+    if (cookie.startsWith(`${AUTH_COOKIE_NAME}=`)) {
+      return cookie.slice(`${AUTH_COOKIE_NAME}=`.length);
+    }
+  }
+
+  return null;
+}
+
 // ======================================================
 // SHARED AUTH GUARD
 // ======================================================
 //
-// Centralizes the Authorization header -> verifyToken -> role check
+// Centralizes the cookie/JWT -> verifyToken -> role check
 // sequence used across route handlers, so every route enforces the
-// same rules (Bearer scheme, 401 on missing/invalid token, 403 on
+// same rules (cookie-based auth, 401 on missing/invalid token, 403 on
 // disallowed role) instead of re-implementing it per file.
 
 export type AuthResult =
@@ -39,9 +54,9 @@ export function requireAuth(
   req: Request,
   allowedRoles?: string[]
 ): AuthResult {
-  const authHeader = req.headers.get("authorization");
+  const token = getTokenFromRequest(req);
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!token) {
     return {
       ok: false,
       response: NextResponse.json(
@@ -56,7 +71,6 @@ export function requireAuth(
     };
   }
 
-  const token = authHeader.split(" ")[1];
   const decoded = verifyToken(token);
 
   if (!decoded) {

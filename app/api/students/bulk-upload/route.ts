@@ -7,6 +7,7 @@ import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
 import { Gender } from "@prisma/client";
 import { mapHeaders, missingRequiredHeaders, STUDENT_IMPORT_FIELDS } from "@/lib/import/import-config";
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from "@/lib/password-policy";
 import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
@@ -186,6 +187,7 @@ export async function POST(req: NextRequest) {
       // required fields
       if (!username) reasons.push("missing required field: username");
       if (!password) reasons.push("missing required field: password");
+      else if (!isPasswordValid(password)) reasons.push(PASSWORD_POLICY_MESSAGE);
       if (!fullName) reasons.push("missing required field: full_name");
       if (!rollNo) reasons.push("missing required field: roll_no");
       if (!genderValue) reasons.push("missing required field: gender");

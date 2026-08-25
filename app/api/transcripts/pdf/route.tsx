@@ -1,4 +1,4 @@
-import { ResultStatus, ExamType } from "@prisma/client";
+﻿import { ResultStatus, ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
@@ -299,7 +299,7 @@ export async function GET(request: NextRequest) {
     };
 
     // 5. Load University Logo from public folder as Base64 Data URL
-    const logoPath = path.join(process.cwd(), "public", "images", "atu-logo.png");
+    const logoPath = path.join(process.cwd(), "public", "images", "atu-logo.jpg");
     let logoBase64 = "";
     try {
       if (fs.existsSync(logoPath)) {
@@ -313,7 +313,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. Generate Verification QR Code using environment base URL
-    const secret = process.env.JWT_SECRET || "atu_fallback_secret_2026";
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
     const token = crypto.createHmac("sha256", secret).update(studentId.toString()).digest("hex").substring(0, 16);
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const verificationUrl = `${baseUrl}/verify/transcript/${studentId}?token=${token}`;
@@ -353,3 +359,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

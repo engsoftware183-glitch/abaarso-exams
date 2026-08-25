@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { FileDown, Printer } from "lucide-react";
@@ -100,7 +100,7 @@ export default function StudentTranscriptPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-12 overflow-hidden rounded-lg bg-white">
-                  <Image src="/images/atu-logo.png" alt="ATU logo" fill className="object-contain" priority />
+                  <Image src="/images/atu-logo.jpg" alt="ATU logo" fill className="object-contain" priority />
                 </div>
                 <div>
                   <p className="text-sm font-black uppercase tracking-wide text-[#701F3D]">ABAARSO TECH UNIVERSITY</p>
@@ -191,7 +191,7 @@ export default function StudentTranscriptPage() {
                           <td className="px-4 py-3 text-center font-semibold text-[#111827]">{course.final_mark}</td>
                           <td className="px-4 py-3 text-right font-semibold text-[#111827]">{course.total_marks}</td>
                           <td className="px-4 py-3 text-center">
-                            <Badge tone="maroon">{course.grade ?? "—"}</Badge>
+                            <Badge tone="maroon">{course.grade ?? "â€”"}</Badge>
                           </td>
                           <td className="px-4 py-3 text-right font-semibold text-[#111827]">{Number(course.gpa).toFixed(2)}</td>
                         </tr>
@@ -239,3 +239,4 @@ export default function StudentTranscriptPage() {
     </AppShell>
   );
 }
+

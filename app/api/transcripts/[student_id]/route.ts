@@ -7,6 +7,7 @@ import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 import QRCode from "qrcode";
 import crypto from "crypto";
+import { logError } from "@/lib/logger";
 
 
 export async function GET(
@@ -260,7 +261,13 @@ const finalExam = student.studentExams.find(
     const semestersResponse = semestersWithCalculations;
 
     // 6.5 Generate Verification QR Code using environment base URL
-    const secret = process.env.JWT_SECRET || "atu_fallback_secret_2026";
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { success: false, error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
     const token = crypto.createHmac("sha256", secret).update(studentId.toString()).digest("hex").substring(0, 16);
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const verificationUrl = `${baseUrl}/verify/transcript/${studentId}?token=${token}`;
@@ -291,7 +298,7 @@ const finalExam = student.studentExams.find(
       qr_code: qrCodeDataUrl,
     });
   } catch (error) {
-    console.error("Error generating transcript:", error);
+    logError("TRANSCRIPT_ERROR", error);
     return prismaErrorResponse(error, "Failed to generate transcript");
   }
 }
