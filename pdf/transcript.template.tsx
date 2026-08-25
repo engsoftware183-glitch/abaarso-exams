@@ -405,7 +405,7 @@ export default function TranscriptTemplate({
             <Text style={styles.uniName}>ABAARSO TECH UNIVERSITY</Text>
             <Text style={styles.docTitle}>OFFICIAL ACADEMIC TRANSCRIPT</Text>
             <Text style={styles.facultyName}>
-              {faculty || "Faculty of Engineering"}
+              {faculty}
             </Text>
           </View>
           <View style={styles.qrContainer}>
@@ -432,7 +432,7 @@ export default function TranscriptTemplate({
               </View>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Faculty:</Text>
-                <Text style={styles.infoValue}>{faculty || "Faculty of Engineering"}</Text>
+                <Text style={styles.infoValue}>{faculty}</Text>
               </View>
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Department:</Text>

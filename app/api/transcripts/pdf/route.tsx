@@ -2,6 +2,7 @@ import { ResultStatus, ExamType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import QRCode from "qrcode";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextRequest, NextResponse } from "next/server";
@@ -312,8 +313,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. Generate Verification QR Code using environment base URL
+    const secret = process.env.JWT_SECRET || "atu_fallback_secret_2026";
+    const token = crypto.createHmac("sha256", secret).update(studentId.toString()).digest("hex").substring(0, 16);
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const verificationUrl = `${baseUrl}/verify/transcript/${studentId}`;
+    const verificationUrl = `${baseUrl}/verify/transcript/${studentId}?token=${token}`;
     const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
       margin: 2,
       width: 150,

@@ -126,7 +126,7 @@ function ShellContent({ children, title, description }: AppShellProps) {
 
   const sidebar = (
     <aside
-      className={`flex h-full flex-col bg-[#200911] text-white transition-all ${collapsed ? "w-[5.5rem]" : "w-[18rem]"}`}
+      className={`flex h-full flex-col bg-[#200911] text-white transition-all print:hidden ${collapsed ? "w-[5.5rem]" : "w-[18rem]"}`}
       aria-label="Main navigation"
     >
       <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
@@ -222,8 +222,8 @@ function ShellContent({ children, title, description }: AppShellProps) {
           </div>
         </div>
       ) : null}
-      <div className={`transition-all ${collapsed ? "lg:pl-[5.5rem]" : "lg:pl-[18rem]"}`}>
-        <header className="sticky top-0 z-30 border-b border-[#E5E7EB] bg-white/95 backdrop-blur">
+      <div className={`transition-all print:lg:pl-0 ${collapsed ? "lg:pl-[5.5rem]" : "lg:pl-[18rem]"}`}>
+        <header className="sticky top-0 z-30 border-b border-[#E5E7EB] bg-white/95 backdrop-blur print:hidden">
           <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
             <button className="rounded-lg border border-[#E5E7EB] p-2 lg:hidden" aria-label="Open menu" onClick={() => setMobileOpen(true)}>
               <Menu className="h-5 w-5" />
@@ -333,7 +333,7 @@ function ShellContent({ children, title, description }: AppShellProps) {
           </div>
         </header>
         <main className="px-4 py-6 sm:px-6">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between print:hidden">
             <div>
               <p className="text-xs font-black uppercase tracking-wide text-[#90274F]">ABAARSO TECH UNIVERSITY</p>
               <h1 className="mt-2 text-2xl font-black tracking-tight text-[#111827] sm:text-3xl">{title}</h1>

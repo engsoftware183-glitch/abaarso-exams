@@ -49,6 +49,7 @@ type TranscriptResponse = {
     total_credit_hours: number;
     cgpa: number;
   };
+  qr_code?: string;
 };
 
 export default function StudentTranscriptPage() {
@@ -106,7 +107,7 @@ export default function StudentTranscriptPage() {
                   <p className="text-base font-black text-[#111827]">Academic Transcript</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 print:hidden">
                 <Button variant="secondary" onClick={handlePrint}>
                   <Printer className="h-4 w-4" />
                   Print
@@ -115,6 +116,15 @@ export default function StudentTranscriptPage() {
                   <FileDown className="h-4 w-4" />
                   Download PDF
                 </Button>
+              </div>
+              <div className="hidden print:flex flex-col items-center justify-center">
+                {data.qr_code && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={data.qr_code} alt="Verification QR" className="h-16 w-16 object-contain" />
+                    <p className="text-[0.5rem] font-semibold text-[#6B7280] mt-1">Scan to Verify</p>
+                  </>
+                )}
               </div>
             </div>
 
