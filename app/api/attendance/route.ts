@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // CREATE ATTENDANCE
@@ -59,6 +60,8 @@ export async function POST(req: NextRequest) {
           course: true,
         },
       });
+
+    void logActivity("CREATE_ATTENDANCE", `Created attendance mark ${attendance_mark} for student ${student_id}`);
 
     return NextResponse.json(
       {

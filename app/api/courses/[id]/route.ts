@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -173,6 +174,8 @@ export async function PUT(
 
       });
 
+    void logActivity("UPDATE_COURSE", `Updated course ${course_name} (${course_code})`);
+
     return NextResponse.json(
       {
         success: true,
@@ -236,6 +239,8 @@ export async function DELETE(
           Number(params.id),
       },
     });
+
+    void logActivity("DELETE_COURSE", `Deleted course ID ${Number(params.id)}`);
 
     return NextResponse.json(
       {

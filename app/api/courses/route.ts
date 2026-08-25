@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // GET ALL COURSES
@@ -235,6 +236,8 @@ export async function POST(req: NextRequest) {
         },
 
       });
+
+    void logActivity("CREATE_COURSE", `Created course ${course_name} (${course_code})`);
 
     return NextResponse.json(
       {

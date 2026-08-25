@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
-
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // GET ALL ADMINS
@@ -216,6 +217,8 @@ export async function POST(req: NextRequest) {
         });
       });
 
+    void logActivity("CREATE_ADMIN", `Created admin account for ${username}`);
+
     // =========================================
     // RESPONSE
     // =========================================
@@ -258,7 +261,7 @@ export async function POST(req: NextRequest) {
 async function promoteExistingUser(
   targetUserId: number,
   currentUserId: number
-) {
+): Promise<NextResponse> {
   try {
 
     if (
@@ -354,36 +357,37 @@ async function promoteExistingUser(
     // request body - so this endpoint can never be used to mint a
     // SUPER_ADMIN.
 
-    const admin =
-      await prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: {
-            user_id: targetUserId,
-          },
-          data: {
-            role: "ADMIN",
-          },
-        });
+    const admin = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          user_id: targetUserId,
+        },
+        data: {
+          role: "ADMIN",
+        },
+      });
 
-        return tx.admin.create({
-          data: {
-            user_id: targetUserId,
-          },
+      return tx.admin.create({
+        data: {
+          user_id: targetUserId,
+        },
 
-          include: {
-            user: {
-              select: {
-                user_id: true,
-                username: true,
-                email: true,
-                role: true,
-                created_at: true,
-                updated_at: true,
-              },
+        include: {
+          user: {
+            select: {
+              user_id: true,
+              username: true,
+              email: true,
+              role: true,
+              created_at: true,
+              updated_at: true,
             },
           },
-        });
+        },
       });
+    });
+
+    void logActivity("PROMOTE_ADMIN", `Promoted user ${admin.user.username} to administrator`);
 
     return NextResponse.json(
       {

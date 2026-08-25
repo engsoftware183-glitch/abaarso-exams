@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope, examScopeWhere } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // CREATE EXAM
@@ -78,6 +79,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+
+    void logActivity("CREATE_EXAM", `Created ${exam.exam_type} exam for course ${exam.course.course_name}`);
 
     return NextResponse.json(
       {

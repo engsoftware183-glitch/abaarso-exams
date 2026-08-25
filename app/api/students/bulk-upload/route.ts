@@ -7,6 +7,7 @@ import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
 import { Gender } from "@prisma/client";
 import { mapHeaders, missingRequiredHeaders, STUDENT_IMPORT_FIELDS } from "@/lib/import/import-config";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // BULK UPLOAD STUDENTS (real CSV/XLSX import)
@@ -352,6 +353,8 @@ export async function POST(req: NextRequest) {
       console.log("BULK_UPLOAD_STUDENTS_SAVE_ERROR", error);
       return prismaErrorResponse(error, "Failed to import students");
     }
+
+    void logActivity("BULK_IMPORT_STUDENTS", `Imported ${validRows.length} students, ${summary.skipped} skipped, ${summary.invalid} failed`);
 
     return NextResponse.json(
       {

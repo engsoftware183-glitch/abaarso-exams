@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -80,6 +81,8 @@ export async function POST(
         },
 
       });
+
+    void logActivity("ASSIGN_COURSE", `Assigned course ID ${course_id} to department ${department_id}, semester ${semester_id}`);
 
     return NextResponse.json(
       {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // CREATE ASSESSMENT
@@ -63,6 +64,8 @@ export async function POST(req: NextRequest) {
           course: true,
         },
       });
+
+    void logActivity("CREATE_ASSESSMENT", `Created assessment for student ${student_id}, course ${course_id}`);
 
     return NextResponse.json(
       {

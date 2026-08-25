@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // CREATE STUDENT EXAM
@@ -157,6 +158,8 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    void logActivity("CREATE_STUDENT_EXAM", `Created student exam mark ${marks} for student ${student_id}, exam ${exam_id}`);
 
     return NextResponse.json(
       {

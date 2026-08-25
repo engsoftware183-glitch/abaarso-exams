@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
 import { ResultStatus, ExamType } from "@prisma/client";
-
+import { logActivity } from "@/lib/activity-log";
 // ======================================================
 // RESULT CALCULATION RULES
 // ======================================================
@@ -386,8 +387,12 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      void logActivity("GENERATE_RESULT", `Generated result for student ${student_id}, course ${course_id}, grade ${grade}`);
+
       return newResult;
     });
+
+    void logActivity("CREATE_RESULT", `Created result for student ${student_id}, course ${course_id}, semester ${semester_id}`);
 
     return NextResponse.json(
       {

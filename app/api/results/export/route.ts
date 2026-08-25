@@ -11,6 +11,7 @@ import {
   buildExportFilename,
   EXPORT_MAX_ROWS,
 } from "@/lib/export-utils";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // RESULTS EXPORT
@@ -155,6 +156,8 @@ export async function GET(req: NextRequest) {
 
     const filename = buildExportFilename("results", format);
     const truncated = results.length >= EXPORT_MAX_ROWS;
+
+    void logActivity("EXPORT_RESULTS", `Exported ${results.length} result records as ${format.toUpperCase()}`);
 
     // =========================================
     // RESPOND

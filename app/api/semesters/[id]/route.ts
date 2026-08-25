@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -165,6 +166,8 @@ export async function PUT(
 
       });
 
+    void logActivity("UPDATE_SEMESTER", `Updated semester ${semester_name}`);
+
     return NextResponse.json(
       {
         success: true,
@@ -232,6 +235,8 @@ export async function DELETE(
           Number(params.id),
       },
     });
+
+    void logActivity("DELETE_SEMESTER", `Deleted semester ID ${Number(params.id)}`);
 
     return NextResponse.json(
       {

@@ -7,6 +7,7 @@ import type { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -294,6 +295,8 @@ export async function POST(req: NextRequest) {
           });
         }
       );
+
+    void logActivity("CREATE_STUDENT", `Created student ${full_name} (roll: ${roll_no})`);
 
     return NextResponse.json(
       {

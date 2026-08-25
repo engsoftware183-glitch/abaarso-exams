@@ -10,6 +10,7 @@ import {
   buildExportFilename,
   EXPORT_MAX_ROWS,
 } from "@/lib/export-utils";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // STUDENTS EXPORT
@@ -121,6 +122,8 @@ export async function GET(req: NextRequest) {
 
     const filename = buildExportFilename("students", format);
     const truncated = students.length >= EXPORT_MAX_ROWS;
+
+    void logActivity("EXPORT_STUDENTS", `Exported ${students.length} student records as ${format.toUpperCase()}`);
 
     // =========================================
     // RESPOND

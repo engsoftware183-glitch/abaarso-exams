@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -302,6 +303,8 @@ export async function PUT(
 
       });
 
+    void logActivity("UPDATE_STUDENT", `Updated student ${student.full_name} (ID ${student.student_id})`);
+
     return NextResponse.json(
       {
         success: true,
@@ -392,6 +395,8 @@ export async function DELETE(
         user_id: student.user_id,
       },
     });
+
+    void logActivity("DELETE_STUDENT", `Deleted student ID ${Number(params.id)}`);
 
     return NextResponse.json(
       {

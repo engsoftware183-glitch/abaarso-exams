@@ -5,6 +5,7 @@ import { ResultStatus } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -201,6 +202,8 @@ export async function PUT(
         },
       });
 
+    void logActivity("PUBLISH_RESULT", `${status === "PUBLISHED" ? "Published" : "Unpublished"} result ID ${id}`);
+
     return NextResponse.json(
       {
         success: true,
@@ -269,6 +272,8 @@ export async function DELETE(
         result_id: Number(id),
       },
     });
+
+    void logActivity("DELETE_RESULT", `Deleted result ID ${id}`);
 
     return NextResponse.json(
       {

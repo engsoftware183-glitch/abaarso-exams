@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
 import { COURSE_IMPORT_FIELDS, mapHeaders, missingRequiredHeaders } from "@/lib/import/import-config";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // BULK UPLOAD COURSES (real CSV/XLSX import)
@@ -225,6 +226,9 @@ export async function POST(req: NextRequest) {
 
     try {
       const created = await prisma.course.createMany({ data: validRows });
+
+      void logActivity("BULK_IMPORT_COURSES", `Imported ${created.count} courses, ${summary.skipped} skipped, ${summary.invalid} failed`);
+
       return NextResponse.json(
         {
           success: true,

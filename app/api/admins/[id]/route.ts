@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
-
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // GET ONE ADMIN
@@ -235,6 +236,8 @@ export async function PUT(
         },
       });
 
+    void logActivity("UPDATE_ADMIN", `Updated administrator ${updatedUser.username}`);
+
     return NextResponse.json(
       {
         success: true,
@@ -343,6 +346,8 @@ export async function DELETE(
         },
       }),
     ]);
+
+    void logActivity("DELETE_ADMIN", `Removed administrator ID ${admin.user_id}`);
 
     return NextResponse.json(
       {

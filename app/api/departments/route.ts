@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -178,6 +179,8 @@ export async function POST(req: NextRequest) {
         },
 
       });
+
+    void logActivity("CREATE_DEPARTMENT", `Created department ${department_name}`);
 
     return NextResponse.json(
       {

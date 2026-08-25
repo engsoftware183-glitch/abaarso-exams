@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope, examScopeWhere } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // GET SINGLE EXAM
@@ -198,6 +199,8 @@ export async function PUT(
         },
       });
 
+    void logActivity("UPDATE_EXAM", `Updated exam ID ${params.id}`);
+
     return NextResponse.json(
       {
         success: true,
@@ -247,6 +250,8 @@ export async function DELETE(
           Number(params.id),
       },
     });
+
+    void logActivity("DELETE_EXAM", `Deleted exam ID ${params.id}`);
 
     return NextResponse.json(
       {

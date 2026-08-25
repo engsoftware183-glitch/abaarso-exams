@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // GET SINGLE ATTENDANCE
@@ -139,6 +140,8 @@ export async function PUT(
         },
       });
 
+    void logActivity("UPDATE_ATTENDANCE", `Updated attendance mark ${attendance_mark} for attendance ID ${id}`);
+
     return NextResponse.json(
       {
         success: true,
@@ -199,6 +202,8 @@ export async function DELETE(
         attendance_id: Number(id),
       },
     });
+
+    void logActivity("DELETE_ATTENDANCE", `Deleted attendance ID ${id}`);
 
     return NextResponse.json(
       {

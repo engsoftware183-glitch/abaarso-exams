@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -114,6 +115,8 @@ export async function POST(
 
         skipDuplicates: true,
       });
+
+    void logActivity("BULK_REGISTER_USERS", `Registered ${createdUsers.count} users`);
 
     // =========================================
     // RESPONSE

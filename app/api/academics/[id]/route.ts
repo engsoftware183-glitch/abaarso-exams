@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 
 // ======================================================
@@ -149,6 +150,8 @@ export async function PUT(
         },
       });
 
+    void logActivity("UPDATE_ACADEMIC", `Updated academic year to ${year}`);
+
     // =========================================
     // RESPONSE
     // =========================================
@@ -220,6 +223,8 @@ export async function DELETE(
         ),
       },
     });
+
+    void logActivity("DELETE_ACADEMIC", `Deleted academic year ID ${Number(params.id)}`);
 
     // =========================================
     // RESPONSE

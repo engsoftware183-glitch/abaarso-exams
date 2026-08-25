@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireStudentScope } from "@/lib/student-scope";
 import { prismaErrorResponse } from "@/lib/errors";
+import { logActivity } from "@/lib/activity-log";
 
 // ======================================================
 // GET SINGLE ASSESSMENT
@@ -141,6 +142,8 @@ export async function PUT(
         },
       });
 
+    void logActivity("UPDATE_ASSESSMENT", `Updated assessment ID ${id}`);
+
     return NextResponse.json(
       {
         success: true,
@@ -201,6 +204,8 @@ export async function DELETE(
         assessment_id: Number(id),
       },
     });
+
+    void logActivity("DELETE_ASSESSMENT", `Deleted assessment ID ${id}`);
 
     return NextResponse.json(
       {

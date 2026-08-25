@@ -120,7 +120,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Profile", href: "/profile", icon: Users },
       { label: "Settings", href: "/settings", icon: Settings },
-      { label: "Audit Logs", href: "/audit-logs", icon: Activity, roles: ["SUPER_ADMIN"] },
+      { label: "Audit Logs", href: "/audit-logs", icon: Activity, roles: ["SUPER_ADMIN", "ADMIN"] },
       { label: "Logout", href: "#logout", icon: LogOut },
     ],
   },
