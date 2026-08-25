@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
         <div className="loginVisualContent relative flex flex-col items-center">
           <div className="relative h-22.5 w-22.5 shrink-0 overflow-hidden rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.25)] md:h-32.5 md:w-32.5">
-            <Image src="/images/atu-logo.png" alt="Abaarso Tech University official seal" fill className="object-cover" priority />
+            <Image src="/images/atu-logo.jpg" alt="Abaarso Tech University official seal" fill className="object-cover" priority />
           </div>
 
           <h1 className="mt-6 text-base font-black uppercase tracking-wide text-white md:text-lg lg:text-xl">Abaarso Tech University</h1>
@@ -86,7 +86,7 @@ export default function LoginPage() {
         <div className="relative w-full max-w-[420px] sm:max-w-[480px]">
           <div className="mb-4 flex flex-col items-center text-center sm:mb-5 md:hidden">
             <div className="relative h-22.5 w-22.5 overflow-hidden rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.18)]">
-              <Image src="/images/atu-logo.png" alt="Abaarso Tech University official seal" fill className="object-cover" priority />
+              <Image src="/images/atu-logo.jpg" alt="Abaarso Tech University official seal" fill className="object-cover" priority />
             </div>
             <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#90274F] dark:text-[#F7D9E4]">Abaarso Tech University</p>
           </div>
@@ -145,17 +145,24 @@ export default function LoginPage() {
               </span>
             </label>
 
-            <label className="flex items-center gap-2 text-sm font-semibold text-[#4B5563] dark:text-[#94A3B8]">
-              <input
-                className="h-4 w-4 rounded border-[#CBD5E1] accent-[#B72E5F] dark:border-[#334155] dark:accent-[#C53668]"
-                type="checkbox"
-                checked={remember}
-                onChange={(event) => setRemember(event.target.checked)}
-              />
-              Remember me
-            </label>
+             <label className="flex items-center gap-2 text-sm font-semibold text-[#4B5563] dark:text-[#94A3B8]">
+               <input
+                 className="h-4 w-4 rounded border-[#CBD5E1] accent-[#B72E5F] dark:border-[#334155] dark:accent-[#C53668]"
+                 type="checkbox"
+                 checked={remember}
+                 onChange={(event) => setRemember(event.target.checked)}
+               />
+               Remember me
+             </label>
 
-            {showRecovery ? (
+             <Link
+               href="/forgot-password"
+               className="text-xs font-semibold text-[#90274F] transition-colors hover:text-[#701F3D] hover:underline dark:text-[#F7D9E4] dark:hover:text-[#C53668]"
+             >
+               Forgot password?
+             </Link>
+
+             {showRecovery ? (
               <Link
                 href="/forgot-password"
                 className="-mt-1 text-xs font-semibold text-[#90274F] transition-colors hover:text-[#701F3D] hover:underline dark:text-[#F7D9E4] dark:hover:text-[#C53668]"
@@ -184,3 +191,4 @@ export default function LoginPage() {
     </main>
   );
 }
+

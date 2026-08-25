@@ -19,14 +19,28 @@ export default async function VerifyTranscriptPage({
   }
 
   // Verify the HMAC token
-  const secret = process.env.JWT_SECRET || "atu_fallback_secret_2026";
-  const expectedToken = crypto.createHmac("sha256", secret).update(studentId.toString()).digest("hex").substring(0, 16);
-
-  if (!token || token !== expectedToken) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
     return (
       <div className="min-h-screen bg-[#F5F7F9] flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-lg shadow-sm border border-[#E5E7EB] max-w-md w-full text-center">
-          <Image src="/images/atu-logo.png" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
+           <Image src="/images/atu-logo.jpg" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
+          <h1 className="text-xl font-black text-[#90274F]">ABAARSO TECH UNIVERSITY</h1>
+          <div className="my-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h2 className="text-lg font-bold text-red-700">Verification Unavailable</h2>
+            <p className="text-sm text-red-600 mt-1">The verification service is not configured.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const expectedToken = crypto.createHmac("sha256", secret).update(studentId.toString()).digest("hex").substring(0, 16);
+
+  if (!token || token.length !== expectedToken.length || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken))) {
+    return (
+      <div className="min-h-screen bg-[#F5F7F9] flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-lg shadow-sm border border-[#E5E7EB] max-w-md w-full text-center">
+           <Image src="/images/atu-logo.jpg" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
           <h1 className="text-xl font-black text-[#90274F]">ABAARSO TECH UNIVERSITY</h1>
           <div className="my-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <h2 className="text-lg font-bold text-red-700">Not Verified</h2>
@@ -53,7 +67,7 @@ export default async function VerifyTranscriptPage({
     return (
       <div className="min-h-screen bg-[#F5F7F9] flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-lg shadow-sm border border-[#E5E7EB] max-w-md w-full text-center">
-          <Image src="/images/atu-logo.png" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
+           <Image src="/images/atu-logo.jpg" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
           <h1 className="text-xl font-black text-[#90274F]">ABAARSO TECH UNIVERSITY</h1>
           <div className="my-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <h2 className="text-lg font-bold text-red-700">Not Verified</h2>
@@ -68,7 +82,7 @@ export default async function VerifyTranscriptPage({
   return (
     <div className="min-h-screen bg-[#F5F7F9] flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-lg shadow-sm border border-[#E5E7EB] max-w-md w-full text-center">
-        <Image src="/images/atu-logo.png" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
+         <Image src="/images/atu-logo.jpg" alt="ATU Logo" width={80} height={80} className="mx-auto mb-4" />
         <h1 className="text-xl font-black text-[#90274F]">ABAARSO TECH UNIVERSITY</h1>
         <div className="my-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <h2 className="text-lg font-bold text-green-700">Transcript Verified</h2>
